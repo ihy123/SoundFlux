@@ -1,0 +1,30 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="using:System">
+
+	<sys:String x:Key="Lang.AboutLabel">О программе</sys:String>
+	<sys:String x:Key="Lang.AboutText">SoundFlux - бесплатная программа с открытым исходным кодом для передачи звука по локальной сети.</sys:String>
+	<sys:String x:Key="Lang.AdvancedSettingsExpander">Дополнительные настройки</sys:String>
+	<sys:String x:Key="Lang.ClientLabel">Клиент</sys:String>
+	<sys:String x:Key="Lang.ClientsExpander">Клиенты</sys:String>
+	<sys:String x:Key="Lang.ConnectButton">Подключиться</sys:String>
+	<sys:String x:Key="Lang.ConnectTimeoutLabel">Ожидание подключения (с)</sys:String>
+	<sys:String x:Key="Lang.CurrentInputFormatLabel">Текущий формат ввода</sys:String>
+	<sys:String x:Key="Lang.DisconnectButton">Отключиться</sys:String>
+	<sys:String x:Key="Lang.InputDeviceExpander">Устройство ввода</sys:String>
+	<sys:String x:Key="Lang.LanguageLabel">Язык</sys:String>
+	<sys:String x:Key="Lang.LibrariesUsedLabel">Использованные библиотеки</sys:String>
+	<sys:String x:Key="Lang.NetworkBufferLabel">Сетевой буффер (мс)</sys:String>
+	<sys:String x:Key="Lang.OutputDeviceExpander">Устройство вывода</sys:String>
+	<sys:String x:Key="Lang.PlaybackBufferLabel">Буффер воспроизведения (мс)</sys:String>
+	<sys:String x:Key="Lang.PortLabel">Порт: </sys:String>
+	<sys:String x:Key="Lang.RecordingPollingPeriodLabel">Период опроса устройства ввода (мс)</sys:String>
+	<sys:String x:Key="Lang.ResetDefaultsButton">Сброс</sys:String>
+	<sys:String x:Key="Lang.ServerAddressLabel">Адрес сервера: </sys:String>
+	<sys:String x:Key="Lang.ServerBufferLabel">Буффер сервера (мс)</sys:String>
+	<sys:String x:Key="Lang.ServerLabel">Сервер</sys:String>
+	<sys:String x:Key="Lang.StartButton">Запустить</sys:String>
+	<sys:String x:Key="Lang.TerminateButton">Остановить</sys:String>
+	<sys:String x:Key="Lang.TransmissionFormatLabel">Формат передачи</sys:String>
+
+</ResourceDictionary>

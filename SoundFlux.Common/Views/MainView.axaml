@@ -1,0 +1,188 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:views="clr-namespace:SoundFlux.Views"
+             xmlns:viewModels="clr-namespace:SoundFlux.ViewModels"
+			 xmlns:r="clr-namespace:SoundFlux.Resources"
+			 mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="430"
+             x:Class="SoundFlux.Views.MainView"
+			 FontFamily="/Assets/Fonts/Inter#Inter"
+			 FontWeight="Light" FontSize="13">
+
+	<UserControl.Styles>
+		<!-- Tab control style -->
+		<Style Selector="TabControl">
+			<Setter Property="Background" Value="{DynamicResource PrimaryBackground}"/>
+		</Style>
+		
+		<Style Selector="TabItem">
+			<Setter Property="Background" Value="{DynamicResource SecondaryBackground}"/>
+			<Setter Property="Padding" Value="5"/>
+			<Setter Property="MinHeight" Value="0"/>
+			<Setter Property="Foreground" Value="{DynamicResource PrimaryForeground}"/>
+			<Setter Property="FontSize" Value="25"/>
+			<Setter Property="FontWeight" Value="ExtraLight"/>
+			<Setter Property="HorizontalAlignment" Value="Stretch"/>
+			<Setter Property="HorizontalContentAlignment" Value="Center"/>
+		</Style>
+	
+		<Style Selector="TabItem:selected">
+			<Setter Property="FontWeight" Value="Light"/>
+		</Style>
+
+		<Style Selector="TabItem:selected /template/ ContentPresenter">
+			<Setter Property="Background" Value="{DynamicResource PrimaryBackground}"/>
+		</Style>
+
+		<Style Selector="TabItem:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="{DynamicResource PrimaryBackground}"/>
+		</Style>
+
+		<!--
+		<Style Selector="TabItem:selected /template/ Panel Border">
+			<Setter Property="IsVisible" Value="False"/>
+		</Style>
+		-->
+		
+		<Style Selector="TextBox">
+			<Setter Property="MinWidth" Value="50"/>
+			<Setter Property="CornerRadius" Value="3"/>
+			<Setter Property="Padding" Value="5"/>
+		</Style>
+
+		<Style Selector="Expander">
+			<Setter Property="HorizontalAlignment" Value="Stretch"/>
+		</Style>
+		<Style Selector="Expander:expanded /template/ ToggleButton#PART_toggle /template/ Path">
+			<Setter Property="RenderTransform">
+				<RotateTransform Angle="180"/>
+			</Setter>
+		</Style>
+
+		<Style Selector="Expander /template/ ToggleButton">
+			<Setter Property="Template">
+				<ControlTemplate>
+					<Border BorderThickness="1" Padding="5 10 10 10">
+						<Grid ColumnDefinitions="Auto,*">
+							<Border Grid.Column="0" Padding="0 0 5 0"
+									Width="20" Height="20"
+									HorizontalAlignment="Center"
+									VerticalAlignment="Center">
+								<Path HorizontalAlignment="Center"
+									  VerticalAlignment="Center"
+									  Data="M 0 0 L 7 7 L 14 0"
+									  Stroke="{DynamicResource PrimaryForeground}"
+									  StrokeThickness="1"/>
+							</Border>
+							<ContentPresenter Name="PART_ContentPresenter"
+											  Grid.Column="1"
+											  Padding="0"
+											  VerticalAlignment="Center"
+											  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+											  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+											  Background="Transparent"
+											  Content="{TemplateBinding Content}"
+											  ContentTemplate="{Binding $parent[Expander].HeaderTemplate}" />
+						</Grid>
+					</Border>
+				</ControlTemplate>
+			</Setter>
+		</Style>
+
+		<Style Selector="ComboBox">
+			<Setter Property="Background" Value="{DynamicResource ThemeBackgroundBrush}"/>
+			<Setter Property="CornerRadius" Value="2"/>
+			<Setter Property="Padding" Value="5"/>
+		</Style>
+		
+		<Style Selector="ComboBox.custom /template/ Path">
+			<Setter Property="Stroke" Value="{DynamicResource PrimaryForeground}"/>
+			<Setter Property="StrokeThickness" Value="1"/>
+			<Setter Property="Fill" Value=""/>
+			<Setter Property="Data" Value="M 0 0 L 3 3 L 6 0"/>
+		</Style>
+
+		<Style Selector="ComboBox.custom /template/ ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="RenderTransform">
+				<RotateTransform Angle="180"/>
+			</Setter>
+		</Style>
+
+		<Style Selector="Button">
+			<Setter Property="CornerRadius" Value="3"/>
+		</Style>
+	</UserControl.Styles>
+
+	<Panel x:Name="mainPanel">
+		
+		<TabControl Name="MainTabControl" Focusable="True" Padding="0" Margin="0"
+				Foreground="{DynamicResource PrimaryForeground}">
+			<TabItem Grid.Column="0">
+				<TabItem.Header>
+					<Image Margin="5 0" Height="30" VerticalAlignment="Center"
+						   Source="/Assets/Icons/settings.png"/>
+				</TabItem.Header>
+					
+				<ScrollViewer>
+					<views:SettingsView>
+						<views:SettingsView.DataContext>
+							<viewModels:SettingsViewModel/>
+						</views:SettingsView.DataContext>
+					</views:SettingsView>
+				</ScrollViewer>
+			</TabItem>
+
+			<TabItem Grid.Column="1">
+				<TabItem.Header>
+					<StackPanel VerticalAlignment="Center">
+						<TextBlock Text="{DynamicResource Lang.ServerLabel}"/>
+						<Border BorderThickness="1"
+								BorderBrush="{Binding #serverView.DataContext.Status,
+								Converter={x:Static viewModels:ServerStatusConverters.ToColor}}"/>
+					</StackPanel>
+				</TabItem.Header>
+
+				<ScrollViewer>
+					<views:ServerView x:Name="serverView">
+						<views:ServerView.DataContext>
+							<viewModels:ServerViewModel/>
+						</views:ServerView.DataContext>
+					</views:ServerView>
+				</ScrollViewer>
+			</TabItem>
+
+			<TabItem Grid.Column="2">
+				<TabItem.Header>
+					<StackPanel VerticalAlignment="Center">
+						<TextBlock Text="{DynamicResource Lang.ClientLabel}"/>
+						<Border BorderThickness="1"
+								BorderBrush="{Binding #clientView.DataContext.Status,
+								Converter={x:Static viewModels:ClientStatusConverters.ToColor}}"/>
+					</StackPanel>
+				</TabItem.Header>
+
+				<ScrollViewer>
+					<views:ClientView x:Name="clientView">
+						<views:ClientView.DataContext>
+							<viewModels:ClientViewModel/>
+						</views:ClientView.DataContext>
+					</views:ClientView>
+				</ScrollViewer>
+			</TabItem>
+		</TabControl>
+
+		<Popup Name="DefaultPopup" IsLightDismissEnabled="True"
+			   Topmost="True" PlacementAnchor="None"
+			   PlacementMode="AnchorAndGravity" PlacementGravity="None">
+			<Border Background="{DynamicResource PrimaryForeground}"
+					BorderBrush="{DynamicResource SecondaryBackground}"
+					BorderThickness="2" CornerRadius="4" Padding="10" Opacity="0.75">
+				<TextBlock Foreground="{DynamicResource PrimaryBackground}"
+						   Name="DefaultPopupText" TextWrapping="Wrap"/>
+			</Border>
+		</Popup>
+		
+	</Panel>
+
+</UserControl>

@@ -1,0 +1,33 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:SoundFlux"
+             x:Class="SoundFlux.App">
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+	<Application.Styles>
+		<SimpleTheme Mode="Light"/>
+	</Application.Styles>
+
+	<Application.Resources>
+
+		<SolidColorBrush x:Key="PrimaryBackground">#F7F7F7</SolidColorBrush>
+		<SolidColorBrush x:Key="SecondaryBackground">#ECECEC</SolidColorBrush>
+		
+		<SolidColorBrush x:Key="ThemeBackgroundBrush">#FFFFFF</SolidColorBrush>
+
+		<SolidColorBrush x:Key="PrimaryForeground">#000000</SolidColorBrush>
+
+		<SolidColorBrush x:Key="ThemeAccentBrush">#B8B8B8</SolidColorBrush>
+		<SolidColorBrush x:Key="ThemeBorderLowBrush">#D5D5D5</SolidColorBrush>
+		
+		<SolidColorBrush x:Key="ThemeAccentBrush2">#ECECEC</SolidColorBrush>
+		<SolidColorBrush x:Key="ThemeAccentBrush3">#ECECEC</SolidColorBrush>
+		<SolidColorBrush x:Key="ThemeAccentBrush4">#ECECEC</SolidColorBrush>
+		<SolidColorBrush x:Key="ThemeControlHighlightMidBrush">#F7F7F7</SolidColorBrush>
+		<SolidColorBrush x:Key="ThemeControlHighBrush">#AAAAAA</SolidColorBrush>
+
+	</Application.Resources>
+	
+</Application>

@@ -1,0 +1,173 @@
+<StackPanel xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+            xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			xmlns:sys="clr-namespace:System;assembly=mscorlib"
+            xmlns:viewModels="clr-namespace:SoundFlux.ViewModels"
+			xmlns:controls="clr-namespace:SoundFlux.Controls"
+			xmlns:r="clr-namespace:SoundFlux.Resources"
+            mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="600"
+			x:Class="SoundFlux.Views.ServerView" VerticalAlignment="Center"
+			Focusable="True">
+	
+	<Design.DataContext>
+		<!-- This only sets the DataContext for the previewer in an IDE,
+		 to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+		<viewModels:ServerViewModel/>
+	</Design.DataContext>
+
+	<!-- Address -->
+	<StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+				IsVisible="{Binding !#port.IsEnabled, Mode=OneWay}" Margin="0 10 0 0">
+		<TextBlock Text="{DynamicResource Lang.ServerAddressLabel}"/>
+		<!-- Addresses -->
+		<ItemsRepeater Items="{Binding Addresses}">
+			<ItemsRepeater.ItemTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding}"/>
+				</DataTemplate>
+			</ItemsRepeater.ItemTemplate>
+		</ItemsRepeater>
+	</StackPanel>
+	<!-- </Grid> -->
+	
+	<!-- Start button -->
+	<Button Grid.Column="1" HorizontalAlignment="Center"
+		Padding="15 10" FontSize="20" Margin="0 10"
+		Classes.start="{Binding #port.IsEnabled}"
+		Classes.terminate="{Binding !#port.IsEnabled}"
+		Command="{Binding StartCommand}"
+		IsEnabled="{Binding Status, Converter={x:Static viewModels:ServerStatusConverters.IsNotTerminating}}">
+		
+		<Button.Styles>
+			<Style Selector="Button.start">
+				<Setter Property="Content" Value="{DynamicResource Lang.StartButton}"/>
+			</Style>
+			<Style Selector="Button.terminate">
+				<Setter Property="Content" Value="{DynamicResource Lang.TerminateButton}"/>
+			</Style>
+		</Button.Styles>
+	</Button>
+
+	<!-- Input device expander -->
+	<Expander Header="{DynamicResource Lang.InputDeviceExpander}">
+		<!-- Input device -->
+		<Border Background="{DynamicResource PrimaryBackground}">
+			<ComboBox HorizontalAlignment="Stretch" Classes="custom"
+					Items="{Binding InputDevices}" Margin="10"
+					IsEnabled="{Binding #port.IsEnabled, Mode=OneWay}"
+					SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
+					IsDropDownOpen="{Binding IsInputDeviceDropDownOpen, Mode=OneWayToSource}">
+				<ComboBox.ItemTemplate>
+					<DataTemplate>
+						<TextBlock Text="{Binding Converter={x:Static viewModels:AudioDeviceConverter.ToNameString}}"
+									TextWrapping="Wrap"/>
+					</DataTemplate>
+				</ComboBox.ItemTemplate>
+			</ComboBox>
+		</Border>
+	</Expander>
+
+	<!-- Clients expander
+	<Expander HorizontalAlignment="Stretch" Header="{x:Static r:Resources.ClientsExpander}">
+		<ItemsRepeater Items="{Binding Clients}">
+			<ItemsRepeater.ItemTemplate>
+				<DataTemplate>
+					<Grid ColumnDefinitions="* Auto" RowDefinitions="* *">
+						<TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding Name}"/>
+						<TextBlock x:Name="address" Grid.Column="0" Grid.Row="1" Text="{Binding Address}"/>
+							Kick client button
+						<Button Grid.Column="1" Grid.RowSpan="2" Content="Kick"
+								Command="{Binding KickCommand}"/>
+					</Grid>
+				</DataTemplate>
+			</ItemsRepeater.ItemTemplate>
+		</ItemsRepeater>
+	</Expander> -->
+
+	<!-- Advanced settings expander -->
+	<Expander Header="{DynamicResource Lang.AdvancedSettingsExpander}">
+		<Border Background="{DynamicResource PrimaryBackground}">
+			<StackPanel IsEnabled="{Binding #port.IsEnabled, Mode=OneWay}" Margin="10">
+
+				<!-- Current input format -->
+				<TextBlock x:Name="inputFormatLabel" HorizontalAlignment="Center"
+						   Text="{DynamicResource Lang.CurrentInputFormatLabel}"
+						   IsVisible="{Binding CurrentInputFormat, Mode=OneWay,
+								Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+				<TextBlock HorizontalAlignment="Center"
+						   Text="{Binding CurrentInputFormat, Mode=OneWay}"
+						   IsVisible="{Binding #inputFormatLabel.IsVisible, Mode=OneWay}" Margin="0 5 0 10"/>
+				
+				<!-- Transmission format -->
+				<TextBlock Margin="0 0 0 5" HorizontalAlignment="Center" Text="{DynamicResource Lang.TransmissionFormatLabel}"/>
+				<Grid HorizontalAlignment="Center" ColumnDefinitions="* 10 * 10 *">
+					<!-- Channels -->
+					<ComboBox Name="channelsComboBox" Grid.Column="0" HorizontalAlignment="Center"
+							  SelectedItem="{Binding TransmissionChannels}" Classes="custom">
+						<ComboBox.ItemTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding Converter={x:Static viewModels:ServerViewModel.TransmissionChannelsConverter}}"/>
+							</DataTemplate>
+						</ComboBox.ItemTemplate>
+					</ComboBox>
+
+					<!-- Sample rate -->
+					<ComboBox Name="sampleRateComboBox" Grid.Column="2" HorizontalAlignment="Center"
+							  SelectedItem="{Binding TransmissionSampleRate}" Classes="custom">
+						<ComboBox.ItemTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding Converter={x:Static viewModels:ServerViewModel.TransmissionSampleRateConverter}}"/>
+							</DataTemplate>
+						</ComboBox.ItemTemplate>
+					</ComboBox>
+
+					<!-- Bit depth -->
+					<ComboBox Name="bitDepthComboBox" Grid.Column="4" HorizontalAlignment="Center"
+							  SelectedItem="{Binding TransmissionBitDepth}" Classes="custom">
+						<ComboBox.ItemTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding Converter={x:Static viewModels:ServerViewModel.TransmissionBitDepthConverter}}"/>
+							</DataTemplate>
+						</ComboBox.ItemTemplate>
+					</ComboBox>
+				</Grid>
+
+				<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 10">
+					<!-- Port label -->
+					<TextBlock VerticalAlignment="Center" Text="{DynamicResource Lang.PortLabel}"/>
+
+					<!-- Port -->
+					<TextBox x:Name="port" VerticalAlignment="Center" Text="{Binding Port}"
+								IsEnabled="{Binding Status, Converter={x:Static viewModels:ServerStatusConverters.IsNotStarted}}"/>
+				</StackPanel>
+				
+				<!-- Server buffer (serverBufferDurationMs) -->
+				<StackPanel Orientation="Horizontal">
+					<TextBlock Text="{DynamicResource Lang.ServerBufferLabel}"/>
+					<TextBlock Text=" - "/>
+					<TextBlock Text="{Binding ServerBufferDuration, Mode=OneWay}"/>
+				</StackPanel>
+				<Slider Grid.Column="0" VerticalAlignment="Center"
+						IsSnapToTickEnabled="True" Value="{Binding ServerBufferDuration}"
+						Minimum="1" Maximum="5000" TickFrequency="1" Margin="0 0 0 10"/>
+
+				<!-- Recording polling period (RecordingPollingPeriod) -->
+				<StackPanel Orientation="Horizontal">
+					<TextBlock Text="{DynamicResource Lang.RecordingPollingPeriodLabel}"/>
+					<TextBlock Text=" - "/>
+					<TextBlock Text="{Binding RecordingPollingPeriod, Mode=OneWay}"/>
+				</StackPanel>
+				<Slider Grid.Column="0" VerticalAlignment="Center"
+						IsSnapToTickEnabled="True" Value="{Binding RecordingPollingPeriod}"
+						Minimum="1" Maximum="1000" TickFrequency="1" Margin="0 0 0 10"/>
+				
+				<Button Content="{DynamicResource Lang.ResetDefaultsButton}"
+						Command="{Binding ResetAdvancedSettingsCommand}"
+						HorizontalAlignment="Center" Padding="15 3"/>
+
+			</StackPanel>
+		</Border>
+	</Expander>
+
+</StackPanel>

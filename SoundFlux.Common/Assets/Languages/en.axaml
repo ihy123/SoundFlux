@@ -1,0 +1,30 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="using:System">
+	
+	<sys:String x:Key="Lang.AboutLabel">About</sys:String>
+	<sys:String x:Key="Lang.AboutText">SoundFlux is a free open-source program for transfering sound over a local network.</sys:String>
+	<sys:String x:Key="Lang.AdvancedSettingsExpander">Advanced settings</sys:String>
+	<sys:String x:Key="Lang.ClientLabel">Client</sys:String>
+	<sys:String x:Key="Lang.ClientsExpander">Clients</sys:String>
+	<sys:String x:Key="Lang.ConnectButton">Connect</sys:String>
+	<sys:String x:Key="Lang.ConnectTimeoutLabel">Connection timeout (s)</sys:String>
+	<sys:String x:Key="Lang.CurrentInputFormatLabel">Current input format</sys:String>
+	<sys:String x:Key="Lang.DisconnectButton">Disconnect</sys:String>
+	<sys:String x:Key="Lang.InputDeviceExpander">Input device</sys:String>
+	<sys:String x:Key="Lang.LanguageLabel">Language</sys:String>
+	<sys:String x:Key="Lang.LibrariesUsedLabel">Libraries used</sys:String>
+	<sys:String x:Key="Lang.NetworkBufferLabel">Network buffer (ms)</sys:String>
+	<sys:String x:Key="Lang.OutputDeviceExpander">Output device</sys:String>
+	<sys:String x:Key="Lang.PlaybackBufferLabel">Playback buffer (ms)</sys:String>
+	<sys:String x:Key="Lang.PortLabel">Port: </sys:String>
+	<sys:String x:Key="Lang.RecordingPollingPeriodLabel">Recording polling period (ms)</sys:String>
+	<sys:String x:Key="Lang.ResetDefaultsButton">Reset defaults</sys:String>
+	<sys:String x:Key="Lang.ServerAddressLabel">Server address: </sys:String>
+	<sys:String x:Key="Lang.ServerBufferLabel">Server buffer (ms)</sys:String>
+	<sys:String x:Key="Lang.ServerLabel">Server</sys:String>
+	<sys:String x:Key="Lang.StartButton">Start</sys:String>
+	<sys:String x:Key="Lang.TerminateButton">Terminate</sys:String>
+	<sys:String x:Key="Lang.TransmissionFormatLabel">Transmission format</sys:String>
+	
+</ResourceDictionary>

@@ -1,0 +1,63 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+	  <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+	  
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <Platforms>x86;x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ApplicationManifest></ApplicationManifest>
+    <AssemblyName>SoundFlux</AssemblyName>
+    <RootNamespace>SoundFlux.Desktop</RootNamespace>
+    <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+    <UseWindowsForms>False</UseWindowsForms>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+	<PropertyGroup Condition="'$(Platform)' == 'x64'">
+		<PlatformTarget>x64</PlatformTarget>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Platform)' == 'x86'">
+		<PlatformTarget>x86</PlatformTarget>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Content Include="icon.ico" />
+	</ItemGroup>
+	
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="11.0.0-preview4" />
+    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.0-preview4" />
+  </ItemGroup>
+
+  <ItemGroup>
+
+	<ProjectReference Include="..\NetworkInterfaceHelper\NetworkInterfaceHelper.vcxproj">
+		<Project>{b402782f-de0a-41fa-b364-60612a786fb2}</Project>
+		<Name>NetworkInterfaceHelper</Name>
+		<ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+		<OutputItemType>Content</OutputItemType>
+		<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	</ProjectReference>
+
+	<ProjectReference Include="..\SoundFlux.Common\SoundFlux.Common.csproj" />
+	
+  </ItemGroup>
+
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+	    <Exec Command="if &quot;$(PlatformName)&quot;==&quot;x64&quot; (copy /Y &quot;vendor\bass24\x64\bass.dll&quot; &quot;$(OutDir)\bass.dll&quot;) else (copy /Y &quot;vendor\bass24\bass.dll&quot; &quot;$(OutDir)\bass.dll&quot;)&#xD;&#xA;if &quot;$(PlatformName)&quot;==&quot;x64&quot; (copy /Y &quot;vendor\bassenc24\x64\bassenc.dll&quot; &quot;$(OutDir)\bassenc.dll&quot;) else (copy /Y &quot;vendor\bassenc24\bassenc.dll&quot; &quot;$(OutDir)\bassenc.dll&quot;)" />
+    </Target>
+
+	<PropertyGroup>
+		<EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+		<FileVersion>$(AssemblyVersion)</FileVersion>
+		<Version>$(AssemblyVersion)</Version>
+	</PropertyGroup>
+	
+</Project>

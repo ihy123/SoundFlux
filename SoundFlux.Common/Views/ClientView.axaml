@@ -1,0 +1,151 @@
+<StackPanel xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+            xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+            xmlns:viewModels="clr-namespace:SoundFlux.ViewModels"
+			xmlns:controls="clr-namespace:SoundFlux.Controls"
+			xmlns:r="clr-namespace:SoundFlux.Resources"
+            mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="600"
+            x:Class="SoundFlux.Views.ClientView" VerticalAlignment="Center">
+
+	<Design.DataContext>
+		<!-- This only sets the DataContext for the previewer in an IDE,
+         to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+		<viewModels:ClientViewModel/>
+	</Design.DataContext>
+
+	<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 10">
+		<TextBlock Text="{DynamicResource Lang.ServerAddressLabel}" VerticalAlignment="Center"/>
+
+		<TextBox x:Name="serverAddress" Text="{Binding ServerAddress, Mode=TwoWay}"
+					IsEnabled="{Binding Status, Converter={x:Static viewModels:ClientStatusConverters.IsNotConnected}}"/>
+	</StackPanel>
+
+	<Grid ColumnDefinitions="Auto *" RowDefinitions="Auto Auto Auto">
+		<Grid.Styles>
+			<Style Selector="Button.connect">
+				<Setter Property="Content" Value="{DynamicResource Lang.ConnectButton}"/>
+			</Style>
+			<Style Selector="Button.disconnect">
+				<Setter Property="Content" Value="{DynamicResource Lang.DisconnectButton}"/>
+			</Style>
+		</Grid.Styles>
+
+		<!-- Connect button -->
+		<Button HorizontalAlignment="Center" Grid.ColumnSpan="2" Grid.Row="0"
+				Padding="15 10" FontSize="20"
+				Classes.connect="{Binding #serverAddress.IsEnabled}"
+				Classes.disconnect="{Binding !#serverAddress.IsEnabled}"
+				Command="{Binding ConnectAsyncCommand}"
+				IsEnabled="{Binding Status, Converter={x:Static viewModels:ClientStatusConverters.IsNotDisconnecting}}"/>
+
+		<!-- Mute button -->
+		<Button Grid.Column="0" Grid.Row="2" Margin="5 0 0 0"
+				Classes.mute="{Binding !IsMuted}"
+				Classes.unmute="{Binding IsMuted}"
+				Command="{Binding MuteCommand}"
+				BorderThickness="0" Padding="5">
+			<Button.Styles>
+				<Style Selector="Button.mute">
+					<Setter Property="Content">
+						<Template>
+							<Image Height="24" VerticalAlignment="Center"
+								   Source="/Assets/Icons/speaker.png"/>
+						</Template>
+					</Setter>
+				</Style>
+				<Style Selector="Button.unmute">
+					<Setter Property="Content">
+						<Template>
+							<Image Height="24" VerticalAlignment="Center"
+								   Source="/Assets/Icons/speaker-muted.png"/>
+						</Template>
+					</Setter>
+				</Style>
+			</Button.Styles>
+		</Button>
+
+		<TextBlock Text="{Binding Volume, StringFormat={}{0}%}" HorizontalAlignment="Center"
+				   Grid.Column="1" Grid.Row="1" Margin="0 10 0 -6"/>
+			
+		<!-- Volume slider -->
+		<Slider Orientation="Horizontal" VerticalAlignment="Center"
+				Grid.Column="1" Grid.Row="2" Margin="0 0 5 0"
+				Minimum="0" Maximum="300"
+				IsSnapToTickEnabled="True" TickFrequency="1"
+				Value="{Binding Volume}">
+		</Slider>
+	</Grid>
+		
+	<!-- Local servers expander -->
+	<!--
+	<Expander HorizontalAlignment="Stretch" Header="Local servers">
+		<StackPanel>
+			<TextBlock Text="Searching..."/>
+		</StackPanel>
+	</Expander>
+	-->
+
+	<!-- Output device expander -->
+	<Expander Header="{DynamicResource Lang.OutputDeviceExpander}" Margin="0 10 0 0">
+		<!-- Output device -->
+		<Border Background="{DynamicResource PrimaryBackground}">
+			<ComboBox HorizontalAlignment="Stretch" Classes="custom"
+					Items="{Binding OutputDevices}" Margin="10"
+					SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
+					IsEnabled="{Binding #serverAddress.IsEnabled, Mode=OneWay}"
+					IsDropDownOpen="{Binding IsOutputDeviceDropDownOpen, Mode=OneWayToSource}">
+				<ComboBox.ItemTemplate>
+					<DataTemplate>
+						<TextBlock Text="{Binding Converter={x:Static viewModels:AudioDeviceConverter.ToNameString}}"
+									TextWrapping="Wrap"/>
+					</DataTemplate>
+				</ComboBox.ItemTemplate>
+			</ComboBox>
+		</Border>
+	</Expander>
+
+	<!-- Advanced settings expander -->
+	<Expander Header="{DynamicResource Lang.AdvancedSettingsExpander}">
+		<Border Background="{DynamicResource PrimaryBackground}">
+			<StackPanel IsEnabled="{Binding #serverAddress.IsEnabled, Mode=OneWay}" Margin="10">
+
+				<!-- Connect timeout -->
+				<StackPanel Orientation="Horizontal">
+					<TextBlock Text="{DynamicResource Lang.ConnectTimeoutLabel}"/>
+					<TextBlock Text=" - "/>
+					<TextBlock Text="{Binding ConnectTimeOut, Mode=OneWay}"/>
+				</StackPanel>
+				<Slider Grid.Column="0" VerticalAlignment="Center"
+						IsSnapToTickEnabled="True" Value="{Binding ConnectTimeOut}"
+						Minimum="1" Maximum="60" TickFrequency="1" Margin="0 0 0 10"/>
+
+				<!-- Network buffer (networkBufferDurationMs) -->
+				<StackPanel Orientation="Horizontal">
+					<TextBlock Text="{DynamicResource Lang.NetworkBufferLabel}"/>
+					<TextBlock Text=" - "/>
+					<TextBlock Text="{Binding NetworkBufferDuration, Mode=OneWay}"/>
+				</StackPanel>
+				<Slider Grid.Column="0" VerticalAlignment="Center"
+						IsSnapToTickEnabled="True" Value="{Binding NetworkBufferDuration}"
+						Minimum="1" Maximum="5000" TickFrequency="1" Margin="0 0 0 10"/>
+
+				<!-- Playback buffer (playbackBufferDurationMs) -->
+				<StackPanel Orientation="Horizontal">
+					<TextBlock Text="{DynamicResource Lang.PlaybackBufferLabel}"/>
+					<TextBlock Text=" - "/>
+					<TextBlock Text="{Binding PlaybackBufferDuration, Mode=OneWay}"/>
+				</StackPanel>
+				<Slider Grid.Column="0" VerticalAlignment="Center"
+						IsSnapToTickEnabled="True" Value="{Binding PlaybackBufferDuration}"
+						Minimum="1" Maximum="3000" TickFrequency="1" Margin="0 0 0 10"/>
+				
+				<Button Content="{DynamicResource Lang.ResetDefaultsButton}"
+						Command="{Binding ResetAdvancedSettingsCommand}"
+						HorizontalAlignment="Center" Padding="15 3"/>
+
+			</StackPanel>
+		</Border>
+	</Expander>
+
+</StackPanel>

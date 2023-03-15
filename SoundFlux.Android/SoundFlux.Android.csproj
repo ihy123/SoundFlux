@@ -1,0 +1,60 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+	  <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+	  
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>21</SupportedOSPlatformVersion>
+    <Nullable>enable</Nullable>
+    <ApplicationId>com.CompanyName.SoundFlux</ApplicationId>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <AndroidEnableProfiledAot>False</AndroidEnableProfiledAot>
+    <AssemblyName>SoundFlux</AssemblyName>
+    <RootNamespace>SoundFlux.Android</RootNamespace>
+    <Authors>ihy123</Authors>
+    <Version>$(AssemblyVersion)</Version>
+    <FileVersion>$(AssemblyVersion)</FileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AndroidEnableMultiDex>True</AndroidEnableMultiDex>
+    <RunAOTCompilation>False</RunAOTCompilation>
+    <AndroidUseAapt2>True</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AndroidEnableMultiDex>True</AndroidEnableMultiDex>
+    <RunAOTCompilation>False</RunAOTCompilation>
+    <AndroidUseAapt2>True</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <PublishTrimmed>True</PublishTrimmed>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AndroidJavaSource Remove="vendor\bass24-android\examples\dsptest\src\main\java\com\example\dsptest\DSPTest.java" />
+    <AndroidJavaSource Remove="vendor\bass24-android\examples\fxtest\src\main\java\com\example\fxtest\FXTest.java" />
+    <AndroidJavaSource Remove="vendor\bass24-android\examples\livespec\src\main\java\com\example\livespec\LiveSpec.java" />
+    <AndroidJavaSource Remove="vendor\bass24-android\examples\netradio\src\main\java\com\example\netradio\NetRadio.java" />
+    <AndroidJavaSource Remove="vendor\bass24-android\examples\plugins\src\main\java\com\example\plugins\Plugins.java" />
+    <AndroidJavaSource Remove="vendor\bass24-android\examples\rectest\src\main\java\com\example\rectest\RecTest.java" />
+    <AndroidJavaSource Remove="vendor\bass24-android\examples\spectrum\src\main\java\com\example\spectrum\Spectrum.java" />
+    <AndroidJavaSource Remove="vendor\bass24-android\java\com\un4seen\bass\BASS.java" />
+    <AndroidJavaSource Remove="vendor\bassenc24-android\examples\rectest\src\main\java\com\example\rectest\RecTest.java" />
+    <AndroidJavaSource Remove="vendor\bassenc24-android\java\com\un4seen\bass\BASSenc.java" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\drawable\icon.png" />
+    <None Remove="Resources\mipmap-anydpi-v26\ic_launcher.xml" />
+    <None Remove="Resources\mipmap-anydpi-v26\ic_launcher_round.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Android" Version="11.0.0-preview4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SoundFlux.Common\SoundFlux.Common.csproj" />
+  </ItemGroup>
+</Project>
