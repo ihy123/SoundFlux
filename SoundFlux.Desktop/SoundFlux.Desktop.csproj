@@ -27,6 +27,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="keystore-password.txt" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <Content Include="icon.ico" />
 	</ItemGroup>
 	
@@ -59,5 +63,15 @@
 		<FileVersion>$(AssemblyVersion)</FileVersion>
 		<Version>$(AssemblyVersion)</Version>
 	</PropertyGroup>
+
+	<!-- After-publish event (make installer) -->
+	<Target Name="MakeInstaller" AfterTargets="Publish">
+		<Exec Command="copy /Y &quot;$(OutDir)bass.dll&quot; &quot;$(ProjectDir)$(PublishDir)bass.dll&quot;&#xD;&#xA;
+			copy /Y &quot;$(OutDir)bassenc.dll&quot; &quot;$(ProjectDir)$(PublishDir)bassenc.dll&quot;&#xD;&#xA;
+			copy /Y &quot;$(ProjectDir)\firewall.bat&quot; &quot;$(ProjectDir)$(PublishDir)firewall.bat&quot;&#xD;&#xA;
+			copy /Y &quot;$(ProjectDir)\make_installer.iss&quot; &quot;$(ProjectDir)$(PublishDir)make_installer.iss&quot;&#xD;&#xA;
+			cd &quot;$(ProjectDir)$(PublishDir)&quot;&#xD;&#xA;
+			iscc.exe make_installer.iss" />
+	</Target>
 	
 </Project>
