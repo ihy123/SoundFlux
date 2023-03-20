@@ -166,7 +166,8 @@ namespace SoundFlux.Resources {
         /// <summary>
         ///   Ищет локализованную строку, похожую на • AvaloniaUI
         ///• BASS
-        ///• ManagedBass.
+        ///• ManagedBass
+        ///• .NET CommunityToolkit.Mvvm.
         /// </summary>
         public static string LibrariesUsedText {
             get {

@@ -83,7 +83,7 @@ namespace SoundFlux.ViewModels
             var prevSelected = SelectedDevice;
             InputDevices = new(InputDevice.List);
             if (prevSelected != null)
-                SelectedDevice = inputDevices?.First(dev => prevSelected.BassIndex == dev.BassIndex);
+                SelectedDevice = inputDevices?.First(dev => prevSelected.Handle == dev.Handle);
         }
 
         #endregion
@@ -321,7 +321,7 @@ namespace SoundFlux.ViewModels
 
             int selectedDeviceIndex = sect == null ? 0 : sect.GetInt("SelectedDeviceIndex");
             if (selectedDeviceIndex != 0)
-                SelectedDevice = inputDevices.FirstOrDefault(dev => dev.BassIndex == selectedDeviceIndex);
+                SelectedDevice = inputDevices.FirstOrDefault(dev => dev.Handle == selectedDeviceIndex);
             else
                 SelectedDevice = inputDevices.FirstOrDefault(dev => dev.IsDefault);
 
@@ -342,7 +342,7 @@ namespace SoundFlux.ViewModels
         private void SaveSettings()
         {
             var sect = SharedSettings.Instance.AddSection("ServerViewModel");
-            sect.Add("SelectedDeviceIndex", selectedDevice == null ? 0 : selectedDevice.BassIndex);
+            sect.Add("SelectedDeviceIndex", selectedDevice == null ? 0 : selectedDevice.Handle);
             sect.Add("Port", port);
             sect.Add("ServerBufferDuration", serverBufferDuration);
             sect.Add("RecordingPollingPeriod", RecordingPollingPeriod);

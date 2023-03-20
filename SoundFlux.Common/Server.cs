@@ -111,12 +111,5 @@ namespace SoundFlux
                 IsStarted = false;
             }
         }
-
-        public bool Kick(string clientAddress)
-        {
-            if (server == null)
-                return false;
-            return server.Kick(clientAddress);
-        }
     }
 }

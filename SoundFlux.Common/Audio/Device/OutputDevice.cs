@@ -5,10 +5,10 @@ namespace SoundFlux.Audio.Device
 {
     public class OutputDevice : IAudioDevice
     {
+        public int Handle { get; private set; }
         public string? Name { get; private set; }
         public bool IsSystemDefault { get; private set; }
         public bool IsDefault => Name == "Default";
-        public int BassIndex { get; private set; }
 
         private static OutputDevice? noSoundDevice = null;
         public static OutputDevice NoSound
@@ -17,9 +17,9 @@ namespace SoundFlux.Audio.Device
             {
                 if (noSoundDevice == null)
                 {
-                    Bass.GetDeviceInfo(0, out DeviceInfo info);
-                    noSoundDevice = new OutputDevice(info, 0);
-                    noSoundDevice.Initialize();
+                    if (!TryCreate(0, out noSoundDevice))
+                        throw new BassException();
+                    noSoundDevice!.Initialize();
                 }
                 return noSoundDevice;
             }
@@ -66,7 +66,7 @@ namespace SoundFlux.Audio.Device
         {
             if (!initialized)
             {
-                if (!Bass.Init(BassIndex))
+                if (!Bass.Init(Handle))
                     throw new BassException();
                 initialized = true;
             }
@@ -88,11 +88,11 @@ namespace SoundFlux.Audio.Device
         }
 
         public void Select()
-            => Bass.CurrentDevice = BassIndex;
+            => Bass.CurrentDevice = Handle;
 
         private OutputDevice(DeviceInfo info, int bassIndex)
         {
-            BassIndex = bassIndex;
+            Handle = bassIndex;
             Name = info.Name;
             IsSystemDefault = info.IsDefault;
         }

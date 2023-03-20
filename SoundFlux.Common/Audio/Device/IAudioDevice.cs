@@ -2,6 +2,7 @@
 {
     public interface IAudioDevice
     {
+        public int Handle { get; }
         string? Name { get; }
 
         void Initialize();

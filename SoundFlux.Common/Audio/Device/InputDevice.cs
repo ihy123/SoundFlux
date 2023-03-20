@@ -5,13 +5,13 @@ namespace SoundFlux.Audio.Device
 {
     public class InputDevice : IAudioDevice
     {
+        public int Handle { get; private set; }
         public string? Name { get; private set; }
         public bool IsSystemDefault { get; private set; }
         public bool IsDefault => Name == "Default";
         public int Channels { get; private set; } = 0;
         public int SampleRate { get; private set; } = 0;
         public bool IsLoopback { get; private set; }
-        public int BassIndex { get; private set; }
 
         public static List<InputDevice> List
         {
@@ -29,6 +29,7 @@ namespace SoundFlux.Audio.Device
                 return inputDevices;
             }
         }
+
 
         private bool initialized = false;
 
@@ -54,7 +55,7 @@ namespace SoundFlux.Audio.Device
         {
             if (!initialized)
             {
-                if (!Bass.RecordInit(BassIndex) ||
+                if (!Bass.RecordInit(Handle) ||
                     !Bass.RecordGetInfo(out RecordInfo bassRecordInfo))
                     throw new BassException();
                 Channels = bassRecordInfo.Channels;
@@ -79,11 +80,11 @@ namespace SoundFlux.Audio.Device
         }
 
         public void Select()
-            => Bass.CurrentRecordingDevice = BassIndex;
+            => Bass.CurrentRecordingDevice = Handle;
 
         private InputDevice(DeviceInfo info, int bassIndex)
         {
-            BassIndex = bassIndex;
+            Handle = bassIndex;
             Name = info.Name;
             IsSystemDefault = info.IsDefault;
             IsLoopback = info.IsLoopback;

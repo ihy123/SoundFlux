@@ -9,7 +9,6 @@ namespace SoundFlux.Audio.Stream
     {
         public IAudioDevice Device { get; private set; }
 
-        private DownloadProcedure? callback;
         private string addrAndHeaders;
 
         /// <summary>
@@ -20,7 +19,6 @@ namespace SoundFlux.Audio.Stream
             string[]? httpHeaders = null, DownloadProcedure? callback = null, Action? onDisconnected = null)
         {
             Device = device;
-            this.callback = callback;
 
             StringBuilder sb = new StringBuilder("http://");
             sb.Append(serverAddress);

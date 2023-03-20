@@ -1,5 +1,4 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System;
 using System.Linq;
 
 namespace SoundFlux.ViewModels
@@ -14,7 +13,7 @@ namespace SoundFlux.ViewModels
         }
 
         [ObservableProperty]
-        private LangTuple[] languages = Array.Empty<LangTuple>();
+        private LangTuple[] languages;
 
         private LangTuple language;
         public LangTuple Language

@@ -68,23 +68,6 @@
 		</Border>
 	</Expander>
 
-	<!-- Clients expander
-	<Expander HorizontalAlignment="Stretch" Header="{x:Static r:Resources.ClientsExpander}">
-		<ItemsRepeater Items="{Binding Clients}">
-			<ItemsRepeater.ItemTemplate>
-				<DataTemplate>
-					<Grid ColumnDefinitions="* Auto" RowDefinitions="* *">
-						<TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding Name}"/>
-						<TextBlock x:Name="address" Grid.Column="0" Grid.Row="1" Text="{Binding Address}"/>
-							Kick client button
-						<Button Grid.Column="1" Grid.RowSpan="2" Content="Kick"
-								Command="{Binding KickCommand}"/>
-					</Grid>
-				</DataTemplate>
-			</ItemsRepeater.ItemTemplate>
-		</ItemsRepeater>
-	</Expander> -->
-
 	<!-- Advanced settings expander -->
 	<Expander Header="{DynamicResource Lang.AdvancedSettingsExpander}">
 		<Border Background="{DynamicResource PrimaryBackground}">

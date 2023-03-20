@@ -70,7 +70,10 @@ namespace SoundFlux
         }
 
         public void Save()
-            => doc.Save(PlatformUtilities.Instance.SettingsDirectory + SettingsFileName);
+        {
+            Directory.CreateDirectory(PlatformUtilities.Instance.SettingsDirectory);
+            doc.Save(PlatformUtilities.Instance.SettingsDirectory + SettingsFileName);
+        }
 
         public Section AddSection(string name)
         {

@@ -157,7 +157,8 @@
   <data name="LibrariesUsedText" xml:space="preserve">
     <value>• AvaloniaUI
 • BASS
-• ManagedBass</value>
+• ManagedBass
+• .NET CommunityToolkit.Mvvm</value>
   </data>
   <data name="NetworkNotConnectedError" xml:space="preserve">
     <value>Your device is not connected to a network</value>

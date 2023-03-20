@@ -40,7 +40,7 @@ namespace SoundFlux.ViewModels
             var prevSelected = SelectedDevice;
             OutputDevices = new(OutputDevice.List);
             if (prevSelected != null)
-                SelectedDevice = outputDevices?.First(dev => prevSelected.BassIndex == dev.BassIndex);
+                SelectedDevice = outputDevices?.First(dev => prevSelected.Handle == dev.Handle);
         }
 
         #endregion
@@ -194,7 +194,7 @@ namespace SoundFlux.ViewModels
 
             int selectedDeviceIndex = sect == null ? 0 : sect.GetInt("SelectedDeviceIndex");
             if (selectedDeviceIndex != 0)
-                SelectedDevice = outputDevices.FirstOrDefault(dev => dev.BassIndex == selectedDeviceIndex);
+                SelectedDevice = outputDevices.FirstOrDefault(dev => dev.Handle == selectedDeviceIndex);
             else
                 SelectedDevice = outputDevices.FirstOrDefault(dev => dev.IsDefault);
 
@@ -214,7 +214,7 @@ namespace SoundFlux.ViewModels
         private void SaveSettings()
         {
             var sect = SharedSettings.Instance.AddSection("ClientViewModel");
-            sect.Add("SelectedDeviceIndex", selectedDevice == null ? 0 : selectedDevice.BassIndex);
+            sect.Add("SelectedDeviceIndex", selectedDevice == null ? 0 : selectedDevice.Handle);
             sect.Add("IsMuted", isMuted);
             sect.Add("Volume", volume);
             sect.Add("ConnectTimeOut", ConnectTimeOut);

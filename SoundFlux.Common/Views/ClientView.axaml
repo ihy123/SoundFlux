@@ -76,15 +76,6 @@
 				Value="{Binding Volume}">
 		</Slider>
 	</Grid>
-		
-	<!-- Local servers expander -->
-	<!--
-	<Expander HorizontalAlignment="Stretch" Header="Local servers">
-		<StackPanel>
-			<TextBlock Text="Searching..."/>
-		</StackPanel>
-	</Expander>
-	-->
 
 	<!-- Output device expander -->
 	<Expander Header="{DynamicResource Lang.OutputDeviceExpander}" Margin="0 10 0 0">

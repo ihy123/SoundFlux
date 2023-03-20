@@ -3,6 +3,7 @@ using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Linq;
 using Avalonia.Platform;
+using System;
 
 namespace SoundFlux.Desktop
 {
@@ -10,7 +11,7 @@ namespace SoundFlux.Desktop
     {
         public override OperatingSystemType OS => OperatingSystemType.WinNT;
 
-        public override string SettingsDirectory => "";
+        public override string SettingsDirectory => Environment.ExpandEnvironmentVariables("%AppData%\\SoundFlux\\");
 
         public PlatformUtilsWin32() => Instance = this;
 
@@ -19,7 +20,7 @@ namespace SoundFlux.Desktop
             string name;
             try
             {
-                name = System.Environment.MachineName;
+                name = Environment.MachineName;
             }
             catch
             {

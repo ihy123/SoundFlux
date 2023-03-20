@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Platform;
 using System;
+using System.Runtime.InteropServices;
 
 namespace SoundFlux.Desktop
 {
@@ -12,9 +13,16 @@ namespace SoundFlux.Desktop
         [STAThread]
         public static void Main(string[] args)
         {
-            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
-            GlobalContext.OnExit();
-            SharedSettings.Instance.Save();
+            try
+            {
+                BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+                GlobalContext.OnExit();
+                SharedSettings.Instance.Save();
+            }
+            catch (Exception e)
+            {
+                ErrorMessageBox(IntPtr.Zero, e.ToString(), "Exception");
+            }
         }
 
         // Avalonia configuration, don't remove; also used by visual designer.
@@ -35,5 +43,8 @@ namespace SoundFlux.Desktop
 
             return builder;
         }
+
+        [DllImport("User32", EntryPoint = "MessageBoxW", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        private extern static bool ErrorMessageBox(IntPtr hWnd, string description, string caption, uint type = 0x10);
     }
 }

@@ -14,12 +14,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <FileVersion>$(AssemblyVersion)</FileVersion>
   </PropertyGroup>
-	
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <NoWarn>MVVMTK0034</NoWarn>
-  </PropertyGroup>
-	
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+
+  <PropertyGroup>
     <NoWarn>MVVMTK0034</NoWarn>
   </PropertyGroup>
 

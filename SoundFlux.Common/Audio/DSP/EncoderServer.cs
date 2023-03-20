@@ -62,8 +62,5 @@ namespace SoundFlux.Audio.DSP
             if (Port == 0)
                 throw new BassException();
         }
-
-        public bool Kick(string clientAddress)
-            => 0 != BassEnc.ServerKick(encoder.Handle, clientAddress);
     }
 }

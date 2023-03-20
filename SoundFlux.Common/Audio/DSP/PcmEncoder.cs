@@ -5,12 +5,12 @@ namespace SoundFlux.Audio.DSP
 {
     internal class PcmEncoder : Encoder
     {
-        public override Stream.Stream? Stream
+        public override Stream.Stream Stream
         {
             get => stream;
             set
             {
-                if (value != null && value.Handle != stream?.Handle)
+                if (value != null && value.Handle != stream.Handle)
                 {
                     stream = value;
                     if (!BassEnc.EncodeSetChannel(Handle, stream.Handle))
@@ -19,7 +19,7 @@ namespace SoundFlux.Audio.DSP
             }
         }
 
-        private Stream.Stream? stream;
+        private Stream.Stream stream;
         private EncodeProcedure callback;
 
         public PcmEncoder(Stream.Stream stream, EncodeProcedure? proc = null)
