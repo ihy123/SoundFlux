@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace SoundFlux.Desktop
 {
-    internal class Program
+    internal partial class Program
     {
         // Initialization code. Don't use any Avalonia, third-party APIs or any
         // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
@@ -44,7 +44,8 @@ namespace SoundFlux.Desktop
             return builder;
         }
 
-        [DllImport("User32", EntryPoint = "MessageBoxW", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        private extern static bool ErrorMessageBox(IntPtr hWnd, string description, string caption, uint type = 0x10);
+        [LibraryImport("User32", EntryPoint = "MessageBoxW", StringMarshalling = StringMarshalling.Utf16)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool ErrorMessageBox(IntPtr hWnd, string description, string caption, uint type = 0x10);
     }
 }

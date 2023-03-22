@@ -7,7 +7,7 @@ using System;
 
 namespace SoundFlux.Desktop
 {
-    public class PlatformUtilsWin32 : PlatformUtilities
+    public partial class PlatformUtilsWin32 : PlatformUtilities
     {
         public override OperatingSystemType OS => OperatingSystemType.WinNT;
 
@@ -49,7 +49,8 @@ namespace SoundFlux.Desktop
             return list;
         }
 
-        [DllImport("NetworkInterfaceHelper", CallingConvention = CallingConvention.Cdecl)]
-        private extern static bool IsHardwareNetworkInterface(uint interfaceIndex);
+        [LibraryImport("NetworkInterfaceHelper")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool IsHardwareNetworkInterface(uint interfaceIndex);
     }
 }

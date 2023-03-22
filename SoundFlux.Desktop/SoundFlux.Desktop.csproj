@@ -62,6 +62,7 @@
 		<EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
 		<FileVersion>$(AssemblyVersion)</FileVersion>
 		<Version>$(AssemblyVersion)</Version>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
 
 	<!-- After-publish event (make installer) -->
