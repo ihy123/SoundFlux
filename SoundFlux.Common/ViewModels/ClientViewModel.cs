@@ -3,13 +3,13 @@ using CommunityToolkit.Mvvm.Input;
 using ManagedBass;
 using SoundFlux.Audio.Device;
 using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace SoundFlux.ViewModels
 {
-    public enum ClientStatus
+    internal enum ClientStatus
     {
         NotConnected,
         Connecting,
@@ -17,12 +17,12 @@ namespace SoundFlux.ViewModels
         Connected
     }
 
-    public partial class ClientViewModel : ObservableObject
+    internal partial class ClientViewModel : ObservableObject
     {
         #region Output device
 
         [ObservableProperty]
-        private ObservableCollection<OutputDevice> outputDevices;
+        private List<OutputDevice>? outputDevices;
 
         [ObservableProperty]
         private OutputDevice? selectedDevice = null;
@@ -37,10 +37,9 @@ namespace SoundFlux.ViewModels
 
         private void RefreshOutputDevices()
         {
-            var prevSelected = SelectedDevice;
-            OutputDevices = new(OutputDevice.List);
-            if (prevSelected != null)
-                SelectedDevice = outputDevices?.First(dev => prevSelected.Handle == dev.Handle);
+            OutputDevices = OutputDevice.List;
+            if (selectedDevice != null)
+                SelectedDevice = outputDevices?.FirstOrDefault(dev => selectedDevice.Handle == dev.Handle);
         }
 
         #endregion
@@ -83,7 +82,7 @@ namespace SoundFlux.ViewModels
                     }
 
                     // check network connection
-                    if (PlatformUtilities.Instance.GetNetworkInterfaceAddressList().Count == 0)
+                    if (PlatformUtilities.Instance.NetworkInterfaceAddressList.Count == 0)
                     {
                         GlobalContext.OnError(Resources.Resources.NetworkNotConnectedError);
                         break;
@@ -93,7 +92,7 @@ namespace SoundFlux.ViewModels
 
                     try
                     {
-                        if (client.Start(selectedDevice, serverAddress, PlatformUtilities.Instance.GetDeviceName(),
+                        if (client.Start(selectedDevice, serverAddress, PlatformUtilities.Instance.DeviceName,
                             (int)networkBufferDuration, (int)playbackBufferDuration, () =>
                             {
                                 Task.Run(() =>
@@ -194,9 +193,9 @@ namespace SoundFlux.ViewModels
 
             int selectedDeviceIndex = sect == null ? 0 : sect.GetInt("SelectedDeviceIndex");
             if (selectedDeviceIndex != 0)
-                SelectedDevice = outputDevices.FirstOrDefault(dev => dev.Handle == selectedDeviceIndex);
+                SelectedDevice = outputDevices?.FirstOrDefault(dev => dev.Handle == selectedDeviceIndex);
             else
-                SelectedDevice = outputDevices.FirstOrDefault(dev => dev.IsDefault);
+                SelectedDevice = outputDevices?.FirstOrDefault(dev => dev.IsDefault);
 
             if (sect == null) return;
 

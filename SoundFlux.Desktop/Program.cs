@@ -1,5 +1,4 @@
 ﻿using Avalonia;
-using Avalonia.Platform;
 using System;
 using System.Runtime.InteropServices;
 
@@ -28,20 +27,13 @@ namespace SoundFlux.Desktop
         // Avalonia configuration, don't remove; also used by visual designer.
         public static AppBuilder BuildAvaloniaApp()
         {
-            var builder = AppBuilder
-                .Configure<App>()
-                .UsePlatformDetect()
-                .LogToTrace();
-
-            var os = builder.RuntimePlatform.GetRuntimeInfo().OperatingSystem;
-            if (os == OperatingSystemType.WinNT)
+            if (OperatingSystem.IsWindows())
                 new PlatformUtilsWin32();
             else
-                throw new Exception($"This platform is not supported ({os})");
+                throw new Exception($"This OS is not supported.");
 
             SharedSettings.Instance.Load();
-
-            return builder;
+            return AppBuilder.Configure<App>().UsePlatformDetect().LogToTrace();
         }
 
         [LibraryImport("User32", EntryPoint = "MessageBoxW", StringMarshalling = StringMarshalling.Utf16)]

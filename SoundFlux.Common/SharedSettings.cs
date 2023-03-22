@@ -16,7 +16,7 @@ namespace SoundFlux
                 => section.Add(new XElement(name, new XText(value)));
 
             public void Add<T>(string name, T value)
-                => Add(name, value.ToString());
+                => Add(name, value?.ToString() ?? "");
 
             public string? Get(string name)
                 => section.Element(name)?.Value;

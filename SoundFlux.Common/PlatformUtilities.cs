@@ -1,5 +1,4 @@
-﻿using Avalonia.Platform;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace SoundFlux
@@ -12,18 +11,16 @@ namespace SoundFlux
             get
             {
                 if (instance == null)
-                    throw new Exception("PlatformUtilities can't be used before initialization");
+                    throw new Exception("PlatformUtilities.Instance is not initialized");
                 return instance;
             }
             protected set => instance = value;
         }
 
-        public abstract OperatingSystemType OS { get; }
-
         public abstract string SettingsDirectory { get; }
 
-        public abstract string GetDeviceName();
+        public abstract string DeviceName { get; }
 
-        public abstract List<string> GetNetworkInterfaceAddressList();
+        public abstract List<string> NetworkInterfaceAddressList { get; }
     }
 }

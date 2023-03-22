@@ -3,9 +3,11 @@ using Android.App;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
+using Android.Util;
 using AndroidX.Core.App;
 using Avalonia;
 using Avalonia.Android;
+using System;
 using Application = Android.App.Application;
 
 namespace SoundFlux.Android
@@ -15,8 +17,15 @@ namespace SoundFlux.Android
     {
         protected override AppBuilder CreateAppBuilder()
         {
-            new PlatformUtilsAndroid(ApplicationContext.FilesDir.AbsolutePath);
-            SharedSettings.Instance.Load();
+            try
+            {
+                new PlatformUtilsAndroid(ApplicationContext!.FilesDir!.AbsolutePath + '/');
+                SharedSettings.Instance.Load();
+            }
+            catch (Exception e)
+            {
+                Log.Error("SplashActivity", e.ToString());
+            }
             return base.CreateAppBuilder();
         }
 
@@ -33,10 +42,7 @@ namespace SoundFlux.Android
             if (Build.VERSION.SdkInt < BuildVersionCodes.M)
                 StartActivity(new Intent(Application.Context, typeof(MainActivity)));
             else
-                RequestPermissions();
+                ActivityCompat.RequestPermissions(this, new string[] { Manifest.Permission.RecordAudio }, 101);
         }
-
-        private void RequestPermissions()
-            => ActivityCompat.RequestPermissions(this, new string[] { Manifest.Permission.RecordAudio }, 101);
     }
 }

@@ -4,6 +4,7 @@
             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
             xmlns:viewModels="clr-namespace:SoundFlux.ViewModels"
 			xmlns:controls="clr-namespace:SoundFlux.Controls"
+			xmlns:sf="clr-namespace:SoundFlux"
 			xmlns:r="clr-namespace:SoundFlux.Resources"
             mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="600"
             x:Class="SoundFlux.Views.SettingsView" VerticalAlignment="Center">
@@ -20,11 +21,11 @@
 
 	<ComboBox HorizontalAlignment="Center" Classes="custom" Margin="10"
 			  SelectedItem="{Binding Language, Mode=TwoWay}"
-			  Items="{Binding Languages, Mode=OneWay}">
+			  Items="{x:Static sf:LanguageManager.SupportedLanguages}">
 
 		<ComboBox.ItemTemplate>
 			<DataTemplate>
-				<TextBlock Text="{Binding Name}"/>
+				<TextBlock Text="{Binding Value}"/>
 			</DataTemplate>
 		</ComboBox.ItemTemplate>
 		

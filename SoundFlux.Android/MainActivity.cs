@@ -1,7 +1,9 @@
 ﻿using Android.App;
 using Android.Content.PM;
 using Android.OS;
+using Android.Util;
 using Avalonia.Android;
+using System;
 
 namespace SoundFlux.Android
 {
@@ -18,8 +20,15 @@ namespace SoundFlux.Android
         protected override void OnStop()
         {
             base.OnStop();
-            GlobalContext.OnExit();
-            SharedSettings.Instance.Save();
+            try
+            {
+                GlobalContext.OnExit();
+                SharedSettings.Instance.Save();
+            }
+            catch (Exception e)
+            {
+                Log.Error("MainActivity", e.ToString());
+            }
         }
     }
 }

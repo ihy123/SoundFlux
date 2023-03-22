@@ -21,13 +21,13 @@
 				IsVisible="{Binding !#port.IsEnabled, Mode=OneWay}" Margin="0 10 0 0">
 		<TextBlock Text="{DynamicResource Lang.ServerAddressLabel}"/>
 		<!-- Addresses -->
-		<ItemsRepeater Items="{Binding Addresses}">
-			<ItemsRepeater.ItemTemplate>
+		<ItemsControl Items="{Binding Addresses}">
+			<ItemsControl.ItemTemplate>
 				<DataTemplate>
 					<TextBlock Text="{Binding}"/>
 				</DataTemplate>
-			</ItemsRepeater.ItemTemplate>
-		</ItemsRepeater>
+			</ItemsControl.ItemTemplate>
+		</ItemsControl>
 	</StackPanel>
 	<!-- </Grid> -->
 	
@@ -36,7 +36,7 @@
 		Padding="15 10" FontSize="20" Margin="0 10"
 		Classes.start="{Binding #port.IsEnabled}"
 		Classes.terminate="{Binding !#port.IsEnabled}"
-		Command="{Binding StartCommand}"
+		Command="{Binding StartAsyncCommand}"
 		IsEnabled="{Binding Status, Converter={x:Static viewModels:ServerStatusConverters.IsNotTerminating}}">
 		
 		<Button.Styles>
