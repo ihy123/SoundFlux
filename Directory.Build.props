@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <Nullable>enable</Nullable>
-    <AvaloniaVersion>11.0.0-preview4</AvaloniaVersion>
-	<AssemblyVersion>0.0.1</AssemblyVersion>
+    <AvaloniaVersion>11.0.0-preview6</AvaloniaVersion>
+	<AssemblyVersion>0.0.2</AssemblyVersion>
   </PropertyGroup>
 </Project>
