@@ -5,10 +5,13 @@ namespace SoundFlux.Audio.Device
 {
     public class OutputDevice : IAudioDevice
     {
+        public const int DefaultHandle = 1;
         public int Handle { get; private set; }
         public string? Name { get; private set; }
         public bool IsSystemDefault { get; private set; }
         public bool IsDefault => Name == "Default";
+
+        private bool initialized = false;
 
         private static OutputDevice? noSoundDevice = null;
         public static OutputDevice NoSound
@@ -25,6 +28,7 @@ namespace SoundFlux.Audio.Device
             }
         }
 
+        // List enabled Output devices
         public static List<OutputDevice> List
         {
             get
@@ -40,26 +44,6 @@ namespace SoundFlux.Audio.Device
                 }
                 return outputDevices;
             }
-        }
-
-        private bool initialized = false;
-
-        /// <summary>
-        /// Try to instantiate from BASS device index
-        /// </summary>
-        /// <param name="bassIndex">BASS device index</param>
-        /// <param name="device">Returns null when device is not enabled or it is a "No sound" device</param>
-        /// <returns>True when index is valid, false when index is out of range</returns>
-        private static bool TryCreate(int bassIndex, out OutputDevice? device)
-        {
-            device = null;
-            if (Bass.GetDeviceInfo(bassIndex, out DeviceInfo info))
-            {
-                if (info.IsEnabled) // && bassIndex != 0
-                    device = new OutputDevice(info, bassIndex);
-                return true;
-            }
-            return false;
         }
 
         public void Initialize()
@@ -98,5 +82,17 @@ namespace SoundFlux.Audio.Device
         }
 
         ~OutputDevice() => Shutdown();
+
+        private static bool TryCreate(int bassIndex, out OutputDevice? device)
+        {
+            device = null;
+            if (Bass.GetDeviceInfo(bassIndex, out DeviceInfo info))
+            {
+                if (info.IsEnabled)
+                    device = new OutputDevice(info, bassIndex);
+                return true;
+            }
+            return false;
+        }
     }
 }

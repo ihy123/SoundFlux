@@ -21,7 +21,7 @@
 
 	<ComboBox HorizontalAlignment="Center" Classes="custom" Margin="10"
 			  SelectedItem="{Binding Language, Mode=TwoWay}"
-			  Items="{x:Static sf:LanguageManager.SupportedLanguages}">
+			  ItemsSource="{Binding SupportedLanguages, Mode=OneTime}">
 
 		<ComboBox.ItemTemplate>
 			<DataTemplate>

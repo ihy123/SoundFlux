@@ -1,4 +1,4 @@
-﻿using Avalonia.Markup.Xaml.MarkupExtensions;
+﻿using Avalonia.Markup.Xaml.Styling;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
@@ -28,7 +28,7 @@ namespace SoundFlux
                     var d = App.Current!.Resources.MergedDictionaries;
                     if (currentResourceInclude != null) d.Remove(currentResourceInclude);
 
-                    currentResourceInclude = new ResourceInclude()
+                    currentResourceInclude = new ResourceInclude((System.Uri?)null)
                     {
                         Source = new System.Uri($"avares://SoundFlux.Common/Assets/Languages/{currentThemeCode}.axaml")
                     };

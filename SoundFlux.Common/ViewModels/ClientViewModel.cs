@@ -1,10 +1,10 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ManagedBass;
 using SoundFlux.Audio.Device;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SoundFlux.ViewModels
@@ -25,21 +25,32 @@ namespace SoundFlux.ViewModels
         private List<OutputDevice>? outputDevices;
 
         [ObservableProperty]
-        private OutputDevice? selectedDevice = null;
+        private int selectedDeviceIndex = OutputDevice.DefaultHandle;
 
         public bool IsOutputDeviceDropDownOpen
         {
             set
             {
-                if (value) Task.Run(RefreshOutputDevices);
+                if (value) Task.Run(RefreshOutputDevicesAsync);
             }
         }
 
-        private void RefreshOutputDevices()
+        private readonly object refreshDevicesMutex = new();
+        private void RefreshOutputDevicesAsync()
         {
-            OutputDevices = OutputDevice.List;
-            if (selectedDevice != null)
-                SelectedDevice = outputDevices?.FirstOrDefault(dev => selectedDevice.Handle == dev.Handle);
+            lock (refreshDevicesMutex)
+            {
+                var list = OutputDevice.List;
+                int handle = Utils.HandleFromDeviceIndex(outputDevices,
+                    selectedDeviceIndex, OutputDevice.DefaultHandle);
+                int newIdx = Utils.DeviceIndexFromHandle(
+                    list, handle, OutputDevice.DefaultHandle);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    OutputDevices = list;
+                    SelectedDeviceIndex = newIdx;
+                });
+            }
         }
 
         #endregion
@@ -67,7 +78,8 @@ namespace SoundFlux.ViewModels
                     break;
                 case ClientStatus.NotConnected:
                     // validate selected device
-                    if (selectedDevice == null)
+                    if (outputDevices == null || selectedDeviceIndex < 0 ||
+                        selectedDeviceIndex >= outputDevices.Count)
                     {
                         GlobalContext.OnError(Resources.Resources.OutputDeviceNotSelectedError);
                         break;
@@ -77,7 +89,7 @@ namespace SoundFlux.ViewModels
                     if (serverAddress == null || !Utils.ValidateIpv4WithPort(serverAddress))
                     {
                         GlobalContext.OnError(string.Format(Resources.Resources.InvalidServerAddressError,
-                            serverAddress == null ? "" : serverAddress));
+                            serverAddress ?? ""));
                         break;
                     }
 
@@ -92,7 +104,8 @@ namespace SoundFlux.ViewModels
 
                     try
                     {
-                        if (client.Start(selectedDevice, serverAddress, PlatformUtilities.Instance.DeviceName,
+                        if (client.Start(outputDevices[selectedDeviceIndex],
+                            serverAddress, PlatformUtilities.Instance.DeviceName,
                             (int)networkBufferDuration, (int)playbackBufferDuration, () =>
                             {
                                 Task.Run(() =>
@@ -190,15 +203,10 @@ namespace SoundFlux.ViewModels
         private void LoadSettings()
         {
             var sect = SharedSettings.Instance.GetSection("ClientViewModel");
-
-            int selectedDeviceIndex = sect == null ? 0 : sect.GetInt("SelectedDeviceIndex");
-            if (selectedDeviceIndex != 0)
-                SelectedDevice = outputDevices?.FirstOrDefault(dev => dev.Handle == selectedDeviceIndex);
-            else
-                SelectedDevice = outputDevices?.FirstOrDefault(dev => dev.IsDefault);
-
             if (sect == null) return;
 
+            SelectedDeviceIndex = Utils.DeviceIndexFromHandle(outputDevices,
+                sect.GetInt("SelectedDeviceHandle", OutputDevice.DefaultHandle), selectedDeviceIndex);
             Volume = sect.GetDouble("Volume", volume);
             IsMuted = sect.GetBool("IsMuted", isMuted);
             ConnectTimeOut = sect.GetDouble("ConnectTimeOut", ConnectTimeOut);
@@ -213,7 +221,8 @@ namespace SoundFlux.ViewModels
         private void SaveSettings()
         {
             var sect = SharedSettings.Instance.AddSection("ClientViewModel");
-            sect.Add("SelectedDeviceIndex", selectedDevice == null ? 0 : selectedDevice.Handle);
+            sect.Add("SelectedDeviceHandle", Utils.HandleFromDeviceIndex(
+                outputDevices, selectedDeviceIndex, OutputDevice.DefaultHandle));
             sect.Add("IsMuted", isMuted);
             sect.Add("Volume", volume);
             sect.Add("ConnectTimeOut", ConnectTimeOut);
@@ -226,12 +235,12 @@ namespace SoundFlux.ViewModels
 
         #endregion
 
-        private Client client = new Client();
+        private Client client = new();
 
         public ClientViewModel()
         {
             GlobalContext.OnExitEvent += SaveSettings;
-            RefreshOutputDevices();
+            OutputDevices = OutputDevice.List;
             LoadSettings();
         }
     }

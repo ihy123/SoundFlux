@@ -8,9 +8,9 @@ namespace SoundFlux.Views
         {
             InitializeComponent();
 
-            channelsComboBox.Items = new int[] { 0, 1, 2 };
-            sampleRateComboBox.Items = new int[] { 0, 8000, 16000, 24000, 32000, 44100, 48000 };
-            bitDepthComboBox.Items = new int[] { 0, 16, 32 };
+            channelsComboBox.ItemsSource = new int[] { 0, 1, 2 };
+            sampleRateComboBox.ItemsSource = new int[] { 0, 8000, 16000, 24000, 32000, 44100, 48000 };
+            bitDepthComboBox.ItemsSource = new int[] { 0, 16, 32 };
         }
     }
 }

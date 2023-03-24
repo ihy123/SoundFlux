@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Styling;
 using SoundFlux.Views;
 using System.Threading;
 
@@ -23,6 +24,8 @@ namespace SoundFlux
             if (string.IsNullOrEmpty(lang)) lang = "en";
 
             LanguageManager.Instance.CurrentThemeCode = lang;
+
+            RequestedThemeVariant = ThemeVariant.Light;
 
             AvaloniaXamlLoader.Load(this);
         }

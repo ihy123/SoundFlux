@@ -5,6 +5,7 @@ namespace SoundFlux.Audio.Device
 {
     public class InputDevice : IAudioDevice
     {
+        public const int DefaultHandle = 0;
         public int Handle { get; private set; }
         public string? Name { get; private set; }
         public bool IsSystemDefault { get; private set; }
@@ -13,6 +14,9 @@ namespace SoundFlux.Audio.Device
         public int SampleRate { get; private set; } = 0;
         public bool IsLoopback { get; private set; }
 
+        private bool initialized = false;
+
+        // List enabled Input devices
         public static List<InputDevice> List
         {
             get
@@ -28,27 +32,6 @@ namespace SoundFlux.Audio.Device
                 }
                 return inputDevices;
             }
-        }
-
-
-        private bool initialized = false;
-
-        /// <summary>
-        /// Try to instantiate from BASS record device index
-        /// </summary>
-        /// <param name="bassIndex">BASS record device index</param>
-        /// <param name="device">Returns null when device is not enabled or it is a "No sound" device</param>
-        /// <returns>True when index is valid, false when index is out of range</returns>
-        private static bool TryCreate(int bassIndex, out InputDevice? device)
-        {
-            device = null;
-            if (Bass.RecordGetDeviceInfo(bassIndex, out DeviceInfo info))
-            {
-                if (info.IsEnabled) // && bassIndex != 0
-                    device = new InputDevice(info, bassIndex);
-                return true;
-            }
-            return false;
         }
 
         public void Initialize()
@@ -91,5 +74,17 @@ namespace SoundFlux.Audio.Device
         }
 
         ~InputDevice() => Shutdown();
+
+        private static bool TryCreate(int bassIndex, out InputDevice? device)
+        {
+            device = null;
+            if (Bass.RecordGetDeviceInfo(bassIndex, out DeviceInfo info))
+            {
+                if (info.IsEnabled)
+                    device = new InputDevice(info, bassIndex);
+                return true;
+            }
+            return false;
+        }
     }
 }

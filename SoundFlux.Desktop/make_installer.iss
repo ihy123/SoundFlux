@@ -29,8 +29,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "firewall.bat"; DestDir: "{tmp}"
-Source: "*"; Excludes: "firewall.bat,installer,make_installer.iss,soundflux.settings.xml"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-; NOTE: Don't use "Flags: ignoreversion" on any shared system files
+Source: "*"; Excludes: "firewall.bat,installer,make_installer.iss,soundflux.settings.xml"; \
+  DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Run]
 Filename: "{tmp}\firewall.bat"; Parameters: """{app}\{#AppExeName}"""; Flags: runhidden

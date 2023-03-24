@@ -10,7 +10,7 @@ namespace SoundFlux.Views
         {
             InitializeComponent();
 
-            MainTabControl.ItemsPanel = new FuncTemplate<IPanel>(() => new Grid()
+            MainTabControl.ItemsPanel = new FuncTemplate<Panel>(() => new Grid()
             {
                 ColumnDefinitions = new ColumnDefinitions("Auto * *")
             });

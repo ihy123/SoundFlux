@@ -1,10 +1,10 @@
 ﻿using Avalonia.Data.Converters;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ManagedBass;
 using SoundFlux.Audio.Device;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SoundFlux.ViewModels
@@ -24,13 +24,13 @@ namespace SoundFlux.ViewModels
         [ObservableProperty]
         private List<InputDevice>? inputDevices;
 
-        private InputDevice? selectedDevice;
-        public InputDevice? SelectedDevice
+        private int selectedDeviceIndex = InputDevice.DefaultHandle;
+        public int SelectedDeviceIndex
         {
-            get => selectedDevice;
+            get => selectedDeviceIndex;
             set
             {
-                SetProperty(ref selectedDevice, value);
+                SetProperty(ref selectedDeviceIndex, value);
                 SetCurrentInputFormat();
             }
         }
@@ -39,15 +39,26 @@ namespace SoundFlux.ViewModels
         {
             set
             {
-                if (value) Task.Run(RefreshInputDevices);
+                if (value) Task.Run(RefreshInputDevicesAsync);
             }
         }
 
-        private void RefreshInputDevices()
+        private readonly object refreshDevicesMutex = new();
+        private void RefreshInputDevicesAsync()
         {
-            InputDevices = InputDevice.List;
-            if (selectedDevice != null)
-                SelectedDevice = inputDevices?.FirstOrDefault(dev => selectedDevice.Handle == dev.Handle);
+            lock (refreshDevicesMutex)
+            {
+                var list = InputDevice.List;
+                int handle = Utils.HandleFromDeviceIndex(inputDevices,
+                    selectedDeviceIndex, InputDevice.DefaultHandle);
+                int newIdx = Utils.DeviceIndexFromHandle(
+                    list, handle, InputDevice.DefaultHandle);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    InputDevices = list;
+                    SelectedDeviceIndex = newIdx;
+                });
+            }
         }
 
         #endregion
@@ -89,7 +100,8 @@ namespace SoundFlux.ViewModels
                     break;
                 case ServerStatus.NotStarted:
                     // validate selected device
-                    if (selectedDevice == null)
+                    if (inputDevices == null || selectedDeviceIndex < 0 ||
+                        selectedDeviceIndex >= inputDevices.Count)
                     {
                         GlobalContext.OnError(Resources.Resources.InputDeviceNotSelectedError);
                         break;
@@ -112,7 +124,8 @@ namespace SoundFlux.ViewModels
 
                     try
                     {
-                        if (server.Start(selectedDevice, (int)serverBufferDuration, portInt, ClientCallback,
+                        if (server.Start(inputDevices[selectedDeviceIndex],
+                            (int)serverBufferDuration, portInt, ClientCallback,
                             transmissionChannels, transmissionSampleRate, transmissionBitDepth != 16))
                         {
                             Status = ServerStatus.Started;
@@ -216,7 +229,7 @@ namespace SoundFlux.ViewModels
             CurrentInputFormat = $"{channels}, {sampleRate}, {bitDepth}";
         }
 
-        private string ChannelCountToString(int channels)
+        private static string ChannelCountToString(int channels)
         {
             switch (channels)
             {
@@ -226,7 +239,7 @@ namespace SoundFlux.ViewModels
             }
         }
 
-        private string FloatSamplesFlagToString(bool floatSamples)
+        private static string FloatSamplesFlagToString(bool floatSamples)
             => (floatSamples ? "32 " : "16 ") + Resources.Resources.BitSuffix;
 
         [RelayCommand]
@@ -265,15 +278,10 @@ namespace SoundFlux.ViewModels
         private void LoadSettings()
         {
             var sect = SharedSettings.Instance.GetSection("ServerViewModel");
-
-            int selectedDeviceIndex = sect == null ? 0 : sect.GetInt("SelectedDeviceIndex");
-            if (selectedDeviceIndex != 0)
-                SelectedDevice = inputDevices?.FirstOrDefault(dev => dev.Handle == selectedDeviceIndex);
-            else
-                SelectedDevice = inputDevices?.FirstOrDefault(dev => dev.IsDefault);
-
             if (sect == null) return;
 
+            SelectedDeviceIndex = Utils.DeviceIndexFromHandle(inputDevices,
+                sect.GetInt("SelectedDeviceHandle", InputDevice.DefaultHandle), selectedDeviceIndex);
             Port = sect.Get("Port", port);
             ServerBufferDuration = sect.GetDouble("ServerBufferDuration", serverBufferDuration);
             RecordingPollingPeriod = sect.GetDouble("RecordingPollingPeriod", DefaultRecordingPollingPeriod);
@@ -289,7 +297,8 @@ namespace SoundFlux.ViewModels
         private void SaveSettings()
         {
             var sect = SharedSettings.Instance.AddSection("ServerViewModel");
-            sect.Add("SelectedDeviceIndex", selectedDevice == null ? 0 : selectedDevice.Handle);
+            sect.Add("SelectedDeviceHandle", Utils.HandleFromDeviceIndex(
+                inputDevices, selectedDeviceIndex, InputDevice.DefaultHandle));
             sect.Add("Port", port);
             sect.Add("ServerBufferDuration", serverBufferDuration);
             sect.Add("RecordingPollingPeriod", RecordingPollingPeriod);
@@ -301,14 +310,14 @@ namespace SoundFlux.ViewModels
 
         #endregion
 
-        private Server server = new Server();
+        private Server server = new();
 
         public ServerViewModel()
         {
             RecordingPollingPeriod = DefaultRecordingPollingPeriod;
 
             GlobalContext.OnExitEvent += SaveSettings;
-            RefreshInputDevices();
+            InputDevices = InputDevice.List;
             LoadSettings();
         }
     }

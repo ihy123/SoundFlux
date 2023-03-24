@@ -82,10 +82,10 @@
 		<!-- Output device -->
 		<Border Background="{DynamicResource PrimaryBackground}">
 			<ComboBox HorizontalAlignment="Stretch" Classes="custom"
-					Items="{Binding OutputDevices}" Margin="10"
-					SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
-					IsEnabled="{Binding #serverAddress.IsEnabled, Mode=OneWay}"
-					IsDropDownOpen="{Binding IsOutputDeviceDropDownOpen, Mode=OneWayToSource}">
+					  ItemsSource="{Binding OutputDevices}" Margin="10"
+					  SelectedIndex="{Binding SelectedDeviceIndex, Mode=TwoWay}"
+					  IsEnabled="{Binding #serverAddress.IsEnabled, Mode=OneWay}"
+					  IsDropDownOpen="{Binding IsOutputDeviceDropDownOpen, Mode=OneWayToSource}">
 				<ComboBox.ItemTemplate>
 					<DataTemplate>
 						<TextBlock Text="{Binding Converter={x:Static viewModels:AudioDeviceConverter.ToNameString}}"

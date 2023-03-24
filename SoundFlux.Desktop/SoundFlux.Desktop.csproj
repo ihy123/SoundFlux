@@ -35,9 +35,9 @@
 	</ItemGroup>
 	
   <ItemGroup>
-    <PackageReference Include="Avalonia.Desktop" Version="11.0.0-preview4" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.0.0-preview6" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.0-preview4" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.0-preview6" />
   </ItemGroup>
 
   <ItemGroup>
@@ -67,12 +67,7 @@
 
 	<!-- After-publish event (make installer) -->
 	<Target Name="MakeInstaller" AfterTargets="Publish">
-		<Exec Command="copy /Y &quot;$(OutDir)bass.dll&quot; &quot;$(ProjectDir)$(PublishDir)bass.dll&quot;&#xD;&#xA;
-			copy /Y &quot;$(OutDir)bassenc.dll&quot; &quot;$(ProjectDir)$(PublishDir)bassenc.dll&quot;&#xD;&#xA;
-			copy /Y &quot;$(ProjectDir)\firewall.bat&quot; &quot;$(ProjectDir)$(PublishDir)firewall.bat&quot;&#xD;&#xA;
-			copy /Y &quot;$(ProjectDir)\make_installer.iss&quot; &quot;$(ProjectDir)$(PublishDir)make_installer.iss&quot;&#xD;&#xA;
-			cd &quot;$(ProjectDir)$(PublishDir)&quot;&#xD;&#xA;
-			iscc.exe make_installer.iss" />
+		<Exec Command="copy /Y &quot;$(OutDir)bass.dll&quot; &quot;$(ProjectDir)$(PublishDir)bass.dll&quot;&#xD;&#xA;&#xD;&#xA;			copy /Y &quot;$(OutDir)bassenc.dll&quot; &quot;$(ProjectDir)$(PublishDir)bassenc.dll&quot;&#xD;&#xA;&#xD;&#xA;			copy /Y &quot;$(ProjectDir)\firewall.bat&quot; &quot;$(ProjectDir)$(PublishDir)firewall.bat&quot;&#xD;&#xA;&#xD;&#xA;			copy /Y &quot;$(ProjectDir)\make_installer.iss&quot; &quot;$(ProjectDir)$(PublishDir)make_installer.iss&quot;&#xD;&#xA;&#xD;&#xA;			cd &quot;$(ProjectDir)$(PublishDir)&quot;&#xD;&#xA;&#xD;&#xA;			iscc.exe make_installer.iss" />
 	</Target>
 	
 </Project>

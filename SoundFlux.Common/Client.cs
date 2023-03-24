@@ -55,7 +55,8 @@ namespace SoundFlux
             Bass.NetBufferLength = networkBufferDurationMs;
             Bass.PlaybackBufferLength = playbackBufferDurationMs;
 
-            stream = new NetworkClientStream(device, serverAddress, new string[] { "SFName:" + clientName }, null, disconnectedCallback);
+            stream = new NetworkClientStream(device, serverAddress,
+                new string[] { "SFName:" + clientName }, null, disconnectedCallback);
             stream.Volume = volume;
 
             return stream.Play();
