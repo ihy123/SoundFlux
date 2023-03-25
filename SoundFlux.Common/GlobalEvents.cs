@@ -2,7 +2,7 @@
 
 namespace SoundFlux
 {
-    public static class GlobalContext
+    public static class GlobalEvents
     {
         public static event Action? OnExitEvent;
         public static void OnExit() { OnExitEvent?.Invoke(); }

@@ -15,7 +15,7 @@ namespace SoundFlux.Desktop
             try
             {
                 BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
-                GlobalContext.OnExit();
+                GlobalEvents.OnExit();
                 SharedSettings.Instance.Save();
             }
             catch (Exception e)

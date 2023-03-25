@@ -1,7 +1,8 @@
 ﻿using ManagedBass;
-using SoundFlux.Audio.Device;
-using SoundFlux.Audio.DSP;
-using SoundFlux.Audio.Stream;
+using ManagedBass.Enc;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace SoundFlux
 {
@@ -9,106 +10,195 @@ namespace SoundFlux
     {
         public delegate bool ClientCallback(bool isConnecting, string clientAddress, string? clientName);
 
-        public InputDevice? Device { get; private set; }
+        private int deviceIndex = 0, streamHandle = 0;
+        private ClientCallback? callback;
+        private EncodeClientProcedure? encodeClientProc;
 
-        public RecordStream? Stream { get; private set; }
+        public const int DefaultInputDeviceIndex = 0;
 
-        public int Port => server == null ? 0 : server.Port;
-
-        public int RecordingPollingPeriod
+        // input device infos mapped by device index
+        public static Dictionary<int, DeviceInfo> InputDevices
         {
-            get => recordingPollingPeriod;
-            set
+            get
             {
-                if (IsStarted)
-                    throw new System.Exception("Attempted to set RecordingPollingPeriod while server is running");
-
-                recordingPollingPeriod = value;
+                // enumerate BASS input devices
+                var infos = new Dictionary<int, DeviceInfo>();
+                for (int i = 0; ; ++i)
+                {
+                    if (!Bass.RecordGetDeviceInfo(i, out DeviceInfo info))
+                        break;
+                    if (info.IsEnabled)
+                        infos.Add(i, info);
+                }
+                return infos;
             }
         }
 
-        public bool IsStarted { get; private set; }
-
-        private int recordingPollingPeriod;
-
-        private Encoder? encoder;
-        private EncoderServer? server;
-        private ClientCallback? callback;
+        public int CurrentPort { get; private set; }
 
         public Server()
-        {
-            if (!Bass.GetConfigBool(Configuration.LoopbackRecording))
-                Bass.Configure(Configuration.LoopbackRecording, true);
-        }
+            => Bass.Configure(Configuration.LoopbackRecording, true);
 
-        public bool Start(InputDevice device, int serverBufferDurationMs, int port,
-            ClientCallback? clientCallback = null,
+        public bool Start(int inputDeviceIndex, int serverBufferDurationMs, string port,
+            int recordingPollingPeriod, ClientCallback? clientCallback = null,
             int transmissionChannels = 0, int transmissionSampleRate = 0,
             bool transmissionFloatSamples = true)
         {
-            if (IsStarted)
-                return false;
-
-            Device = device;
-            device.Initialize();
-
-            if (device.Channels == 0 && transmissionChannels == 0)
-                transmissionChannels = 1;
-            if (device.SampleRate == 0 && transmissionSampleRate == 0)
-                transmissionSampleRate = 44100;
-
-            Stream = new RecordStream(device, transmissionChannels,
-                transmissionSampleRate, transmissionFloatSamples, recordingPollingPeriod);
-
+            deviceIndex = inputDeviceIndex;
             callback = clientCallback;
 
-            var dummy = new DummyStream(OutputDevice.NoSound, Stream.SampleRate, Stream.Channels, Stream.FloatSamples);
-            encoder = new PcmEncoder(dummy);
+            if (!Bass.RecordInit(deviceIndex))
+            {
+                if (Bass.LastError != Errors.Already)
+                    throw new BassException();
 
-            server = new EncoderServer(encoder, port.ToString(),
-                serverBufferDurationMs, 512, callback == null ? null : (isConnecting, clientAddress, httpHeaders) =>
-                {
-                    string? name = null;
+                // if device is already initialized, set it
+                Bass.CurrentRecordingDevice = deviceIndex;
+            }
 
-                    if (httpHeaders != null)
-                    {
-                        foreach (string h in httpHeaders)
-                        {
-                            var parts = h.Split(':');
-                            if (parts[0].Contains("sfname", System.StringComparison.OrdinalIgnoreCase))
-                            {
-                                name = parts[1].Trim(' ');
-                                break;
-                            }
-                        }
-                    }
+            if (!Bass.RecordGetInfo(out RecordInfo bassRecordInfo))
+                throw new BassException();
 
-                    return callback(isConnecting, clientAddress, name);
-                });
+            // validate parameters
+            if (bassRecordInfo.Channels == 0 && transmissionChannels == 0)
+                transmissionChannels = 1;
+            if (bassRecordInfo.Frequency == 0 && transmissionSampleRate == 0)
+                transmissionSampleRate = 44100;
 
+            RecordProcedure recordCallback = (a, b, c, d) => true;
+
+            // try initialize with selected bit depth
+            streamHandle = Bass.RecordStart(transmissionSampleRate, transmissionChannels,
+                BassFlags.RecordPause | (transmissionFloatSamples ? BassFlags.Float : 0),
+                recordingPollingPeriod, recordCallback);
+
+            if (streamHandle == 0 && Bass.LastError == Errors.SampleFormat)
+            {
+                // try initialize with other bit depth
+                streamHandle = Bass.RecordStart(transmissionSampleRate, transmissionChannels,
+                    BassFlags.RecordPause | (transmissionFloatSamples ? 0 : BassFlags.Float),
+                    recordingPollingPeriod, recordCallback);
+            }
+
+            if (streamHandle == 0)
+                throw new BassException();
+
+            // select no sound device
+            if (!Bass.Init(0) && Bass.LastError != Errors.Already)
+                throw new BassException();
+
+            Bass.CurrentDevice = 0;
+
+            // get server buffer size in bytes
+            int bufSize = (int)Bass.ChannelSeconds2Bytes(streamHandle, serverBufferDurationMs / 1000.0);
+            if (bufSize == -1)
+                throw new BassException();
+
+            // create dummy stream
+            GetSamplesInfo(out int channels, out int sampleRate, out bool floatSamples);
+            int dummyStream = Bass.CreateStream(sampleRate, channels, BassFlags.Decode |
+                (floatSamples ? BassFlags.Float : 0), StreamProcedureType.Dummy);
+
+            if (dummyStream == 0)
+                throw new BassException();
+
+            // set up encoder on the dummy stream
+            int encodeHandle = BassEnc.EncodeStart(dummyStream, null,
+                EncodeFlags.PCM | EncodeFlags.AutoFree, (a, b, c, d, e) => { });
+            if (encodeHandle == 0)
+                throw new BassException();
+
+            // start server
+            InitEncodeClientProc();
+            CurrentPort = BassEnc.ServerInit(encodeHandle, port, bufSize, 512, 0, encodeClientProc, 0);
+            if (CurrentPort == 0)
+                throw new BassException();
+
+            // submit silence to the dummy stream
             byte[] silence = new byte[512];
-            dummy.SubmitData(silence, silence.Length);
+            Bass.ChannelGetData(dummyStream, silence, silence.Length);
 
-            encoder.Stream = Stream;
-            dummy.Stop();
+            // move encoder to original stream
+            if (!BassEnc.EncodeSetChannel(encodeHandle, streamHandle))
+                throw new BassException();
 
-            IsStarted = Stream.Play();
-            return IsStarted;
+            // stop dummy encoder
+            Bass.ChannelStop(dummyStream);
+
+            return Bass.ChannelPlay(streamHandle, false);
+        }
+
+        public void GetSamplesInfo(out int channels, out int sampleRate, out bool floatSamples)
+        {
+            if (streamHandle == 0)
+                throw new InvalidOperationException("Server is not initialized");
+
+            if (!Bass.ChannelGetInfo(streamHandle, out ChannelInfo info))
+                throw new BassException();
+
+            channels = info.Channels;
+            sampleRate = info.Frequency;
+            floatSamples = info.Resolution == Resolution.Float;
         }
 
         public void Stop()
         {
-            if (IsStarted)
+            // ignore possible exception while selecting device
+            try
             {
-                Stream?.Stop();
-                Stream = null;
-                encoder?.Stop();
-                encoder = null;
-                Device?.Shutdown();
-                Device = null;
-                server = null;
-                callback = null;
-                IsStarted = false;
+                Bass.CurrentRecordingDevice = deviceIndex;
+                Bass.RecordFree();
+            }
+            catch (BassException) { }
+
+            Bass.ChannelStop(streamHandle);
+            deviceIndex = streamHandle = 0;
+            callback = null;
+            encodeClientProc = null;
+        }
+
+        private void InitEncodeClientProc()
+        {
+            if (callback == null)
+                encodeClientProc = null;
+            else
+            {
+                encodeClientProc = (a, connecting, addr, hdrs, u) =>
+                {
+                    if (hdrs == 0)
+                        return callback(connecting, addr, null);
+
+                    string? name = null;
+
+                    unsafe
+                    {
+                        bool isNull = false, prevIsNull = false;
+                        byte* ptr = (byte*)hdrs;
+                        for (int i = 0; ; ++i)
+                        {
+                            isNull = ptr[i] == 0;
+                            if (isNull)
+                            {
+                                if (prevIsNull)
+                                    break;
+
+                                // process current header
+                                var parts = Encoding.ASCII.GetString(ptr, i).Split(':');
+                                if (parts[0].Contains("sfname", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    name = parts[1].Trim(' ');
+                                    break;
+                                }
+
+                                ptr += i + 1;
+                                i = 0;
+                            }
+                            prevIsNull = isNull;
+                        }
+                    }
+
+                    return callback(connecting, addr, name);
+                };
             }
         }
     }

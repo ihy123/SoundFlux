@@ -47,12 +47,6 @@ namespace SoundFlux
         private XDocument doc;
         private XElement docSections;
 
-        private SharedSettings()
-        {
-            docSections = new XElement("sections");
-            doc = new XDocument(new XDeclaration("1.0", "UTF-8", "yes"), docSections);
-        }
-
         public void Load()
         {
             string path = PlatformUtilities.Instance.SettingsDirectory + SettingsFileName;
@@ -80,6 +74,12 @@ namespace SoundFlux
             XElement sect = new(name);
             docSections.Add(sect);
             return new Section(sect);
+        }
+
+        private SharedSettings()
+        {
+            docSections = new XElement("sections");
+            doc = new XDocument(new XDeclaration("1.0", "UTF-8", "yes"), docSections);
         }
     }
 }

@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ManagedBass;
-using SoundFlux.Audio.Device;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -22,10 +21,10 @@ namespace SoundFlux.ViewModels
         #region Output device
 
         [ObservableProperty]
-        private List<OutputDevice>? outputDevices;
+        private Dictionary<int, DeviceInfo> outputDevices;
 
         [ObservableProperty]
-        private int selectedDeviceIndex = OutputDevice.DefaultHandle;
+        private KeyValuePair<int, DeviceInfo> selectedOutputDevice;
 
         public bool IsOutputDeviceDropDownOpen
         {
@@ -40,15 +39,14 @@ namespace SoundFlux.ViewModels
         {
             lock (refreshDevicesMutex)
             {
-                var list = OutputDevice.List;
-                int handle = Utils.HandleFromDeviceIndex(outputDevices,
-                    selectedDeviceIndex, OutputDevice.DefaultHandle);
-                int newIdx = Utils.DeviceIndexFromHandle(
-                    list, handle, OutputDevice.DefaultHandle);
+                var list = Client.OutputDevices;
+                int idx = list.TryGetValue(SelectedOutputDevice.Key, out DeviceInfo val) ?
+                    SelectedOutputDevice.Key : Client.DefaultOutputDeviceIndex;
+
                 Dispatcher.UIThread.Post(() =>
                 {
                     OutputDevices = list;
-                    SelectedDeviceIndex = newIdx;
+                    SelectedOutputDevice = new(idx, list[idx]);
                 });
             }
         }
@@ -68,7 +66,7 @@ namespace SoundFlux.ViewModels
 
         private void Connect()
         {
-            switch (status)
+            switch (Status)
             {
                 case ClientStatus.Connecting:
                 case ClientStatus.Connected:
@@ -78,25 +76,24 @@ namespace SoundFlux.ViewModels
                     break;
                 case ClientStatus.NotConnected:
                     // validate selected device
-                    if (outputDevices == null || selectedDeviceIndex < 0 ||
-                        selectedDeviceIndex >= outputDevices.Count)
-                    {
-                        GlobalContext.OnError(Resources.Resources.OutputDeviceNotSelectedError);
-                        break;
-                    }
+                    //if (OutputDevices == null)
+                    //{
+                    //    GlobalEvents.OnError(Resources.Resources.OutputDeviceNotSelectedError);
+                    //    break;
+                    //}
 
                     // validate server address
-                    if (serverAddress == null || !Utils.ValidateIpv4WithPort(serverAddress))
+                    if (ServerAddress == null || !Utils.ValidateIpv4WithPort(ServerAddress))
                     {
-                        GlobalContext.OnError(string.Format(Resources.Resources.InvalidServerAddressError,
-                            serverAddress ?? ""));
+                        GlobalEvents.OnError(string.Format(Resources.Resources.InvalidServerAddressError,
+                            ServerAddress ?? ""));
                         break;
                     }
 
                     // check network connection
                     if (PlatformUtilities.Instance.NetworkInterfaceAddressList.Count == 0)
                     {
-                        GlobalContext.OnError(Resources.Resources.NetworkNotConnectedError);
+                        GlobalEvents.OnError(Resources.Resources.NetworkNotConnectedError);
                         break;
                     }
 
@@ -104,30 +101,31 @@ namespace SoundFlux.ViewModels
 
                     try
                     {
-                        if (client.Start(outputDevices[selectedDeviceIndex],
-                            serverAddress, PlatformUtilities.Instance.DeviceName,
-                            (int)networkBufferDuration, (int)playbackBufferDuration, () =>
+                        if (client.Start(SelectedOutputDevice.Key,
+                            ServerAddress, PlatformUtilities.Instance.DeviceName,
+                            (int)NetworkBufferDuration, (int)PlaybackBufferDuration, () =>
                             {
                                 Task.Run(() =>
                                 {
-                                    client.Stop();
                                     Status = ClientStatus.NotConnected;
+                                    client.Stop();
                                     Connect();
                                 });
                             }))
                         {
                             Status = ClientStatus.Connected;
+                            client.Volume = IsMuted ? 0 : volume / 100.0;
                             return;
                         }
                     }
                     catch (BassException e)
                     {
                         if (e.ErrorCode != Errors.FileOpen && e.ErrorCode != Errors.Timeout)
-                            GlobalContext.OnError(string.Format(Resources.Resources.BassErrorFormat, e.Message));
+                            GlobalEvents.OnError(string.Format(Resources.Resources.BassErrorFormat, e.Message));
                     }
                     catch (Exception e)
                     {
-                        GlobalContext.OnError(string.Format(Resources.Resources.ExceptionFormat, e.Message));
+                        GlobalEvents.OnError(string.Format(Resources.Resources.ExceptionFormat, e.Message));
                     }
 
                     // return back unconnected status on connection error
@@ -144,7 +142,9 @@ namespace SoundFlux.ViewModels
         private void Mute()
         {
             IsMuted = !IsMuted;
-            client.Volume = IsMuted ? 0 : volume / 100.0;
+
+            if (Status == ClientStatus.Connected)
+                client.Volume = IsMuted ? 0 : volume / 100.0;
         }
 
         [ObservableProperty]
@@ -159,7 +159,8 @@ namespace SoundFlux.ViewModels
                 OnPropertyChanging();
                 IsMuted = false;
                 volume = value;
-                client.Volume = volume / 100.0;
+                if (Status == ClientStatus.Connected)
+                    client.Volume = volume / 100.0;
                 OnPropertyChanged();
             }
         }
@@ -170,11 +171,11 @@ namespace SoundFlux.ViewModels
 
         public double ConnectTimeOut
         {
-            get => client.ConnectTimeOut / 1000;
+            get => Client.ConnectTimeOut / 1000;
             set
             {
                 OnPropertyChanging();
-                client.ConnectTimeOut = 1000 * (int)value;
+                Client.ConnectTimeOut = 1000 * (int)value;
                 OnPropertyChanged();
             }
         }
@@ -205,13 +206,16 @@ namespace SoundFlux.ViewModels
             var sect = SharedSettings.Instance.GetSection("ClientViewModel");
             if (sect == null) return;
 
-            SelectedDeviceIndex = Utils.DeviceIndexFromHandle(outputDevices,
-                sect.GetInt("SelectedDeviceHandle", OutputDevice.DefaultHandle), selectedDeviceIndex);
-            Volume = sect.GetDouble("Volume", volume);
-            IsMuted = sect.GetBool("IsMuted", isMuted);
+            int selectedDeviceIndex = sect.GetInt("SelectedDeviceIndex", Client.DefaultOutputDeviceIndex);
+            int idx = OutputDevices.ContainsKey(selectedDeviceIndex) ?
+                selectedDeviceIndex : Client.DefaultOutputDeviceIndex;
+            SelectedOutputDevice = new(idx, OutputDevices[idx]);
+
+            Volume = sect.GetDouble("Volume", Volume);
+            IsMuted = sect.GetBool("IsMuted", IsMuted);
             ConnectTimeOut = sect.GetDouble("ConnectTimeOut", ConnectTimeOut);
-            NetworkBufferDuration = sect.GetDouble("NetworkBufferDuration", networkBufferDuration);
-            PlaybackBufferDuration = sect.GetDouble("PlaybackBufferDuration", playbackBufferDuration);
+            NetworkBufferDuration = sect.GetDouble("NetworkBufferDuration", NetworkBufferDuration);
+            PlaybackBufferDuration = sect.GetDouble("PlaybackBufferDuration", PlaybackBufferDuration);
 
             ServerAddress = sect.Get("ServerAddress");
             if (!string.IsNullOrEmpty(ServerAddress))
@@ -221,16 +225,15 @@ namespace SoundFlux.ViewModels
         private void SaveSettings()
         {
             var sect = SharedSettings.Instance.AddSection("ClientViewModel");
-            sect.Add("SelectedDeviceHandle", Utils.HandleFromDeviceIndex(
-                outputDevices, selectedDeviceIndex, OutputDevice.DefaultHandle));
-            sect.Add("IsMuted", isMuted);
-            sect.Add("Volume", volume);
+            sect.Add("SelectedDeviceIndex", SelectedOutputDevice.Key);
+            sect.Add("IsMuted", IsMuted);
+            sect.Add("Volume", Volume);
             sect.Add("ConnectTimeOut", ConnectTimeOut);
-            sect.Add("NetworkBufferDuration", networkBufferDuration);
-            sect.Add("PlaybackBufferDuration", playbackBufferDuration);
+            sect.Add("NetworkBufferDuration", NetworkBufferDuration);
+            sect.Add("PlaybackBufferDuration", PlaybackBufferDuration);
             sect.Add("ServerAddress",
-                serverAddress != null && (status == ClientStatus.Connected || status == ClientStatus.Connecting)
-                ? serverAddress : string.Empty);
+                ServerAddress != null && (Status == ClientStatus.Connected || Status == ClientStatus.Connecting)
+                ? ServerAddress : string.Empty);
         }
 
         #endregion
@@ -239,8 +242,8 @@ namespace SoundFlux.ViewModels
 
         public ClientViewModel()
         {
-            GlobalContext.OnExitEvent += SaveSettings;
-            OutputDevices = OutputDevice.List;
+            GlobalEvents.OnExitEvent += SaveSettings;
+            OutputDevices = Client.OutputDevices;
             LoadSettings();
         }
     }

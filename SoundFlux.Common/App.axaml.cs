@@ -11,10 +11,10 @@ namespace SoundFlux
     {
         public override void Initialize()
         {
-            GlobalContext.OnExitEvent += () =>
+            GlobalEvents.OnExitEvent += () =>
             {
                 var sect = SharedSettings.Instance.AddSection("Interface");
-                sect.Add("Language", LanguageManager.Instance.CurrentThemeCode);
+                sect.Add("Language", LanguageManager.Instance.CurrentLangCode);
             };
 
             var sect = SharedSettings.Instance.GetSection("Interface");
@@ -23,7 +23,7 @@ namespace SoundFlux
             if (string.IsNullOrEmpty(lang)) lang = Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
             if (string.IsNullOrEmpty(lang)) lang = "en";
 
-            LanguageManager.Instance.CurrentThemeCode = lang;
+            LanguageManager.Instance.CurrentLangCode = lang;
 
             RequestedThemeVariant = ThemeVariant.Light;
 

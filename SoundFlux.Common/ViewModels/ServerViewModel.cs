@@ -3,7 +3,6 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ManagedBass;
-using SoundFlux.Audio.Device;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -22,18 +21,10 @@ namespace SoundFlux.ViewModels
         #region Input device
 
         [ObservableProperty]
-        private List<InputDevice>? inputDevices;
+        private Dictionary<int, DeviceInfo> inputDevices;
 
-        private int selectedDeviceIndex = InputDevice.DefaultHandle;
-        public int SelectedDeviceIndex
-        {
-            get => selectedDeviceIndex;
-            set
-            {
-                SetProperty(ref selectedDeviceIndex, value);
-                SetCurrentInputFormat();
-            }
-        }
+        [ObservableProperty]
+        private KeyValuePair<int, DeviceInfo> selectedInputDevice;
 
         public bool IsInputDeviceDropDownOpen
         {
@@ -48,15 +39,14 @@ namespace SoundFlux.ViewModels
         {
             lock (refreshDevicesMutex)
             {
-                var list = InputDevice.List;
-                int handle = Utils.HandleFromDeviceIndex(inputDevices,
-                    selectedDeviceIndex, InputDevice.DefaultHandle);
-                int newIdx = Utils.DeviceIndexFromHandle(
-                    list, handle, InputDevice.DefaultHandle);
+                var list = Server.InputDevices;
+                int idx = list.TryGetValue(SelectedInputDevice.Key, out DeviceInfo val) ?
+                    SelectedInputDevice.Key : Server.DefaultInputDeviceIndex;
+
                 Dispatcher.UIThread.Post(() =>
                 {
                     InputDevices = list;
-                    SelectedDeviceIndex = newIdx;
+                    SelectedInputDevice = new(idx, list[idx]);
                 });
             }
         }
@@ -71,7 +61,7 @@ namespace SoundFlux.ViewModels
         private void SetCurrentAddresses(List<string> addrs)
         {
             for (int i = 0; i < addrs.Count; ++i)
-                addrs[i] = $"{addrs[i]}:{server.Port}";
+                addrs[i] = $"{addrs[i]}:{server.CurrentPort}";
             Addresses = addrs;
         }
 
@@ -87,7 +77,7 @@ namespace SoundFlux.ViewModels
 
         private void Start()
         {
-            switch (status)
+            switch (Status)
             {
                 case ServerStatus.Started:
                 case ServerStatus.Starting:
@@ -95,38 +85,35 @@ namespace SoundFlux.ViewModels
                     Status = ServerStatus.Terminating;
                     server.Stop();
                     clients.Clear();
-                    addresses = null;
+                    Addresses = null;
                     Status = ServerStatus.NotStarted;
                     break;
                 case ServerStatus.NotStarted:
                     // validate selected device
-                    if (inputDevices == null || selectedDeviceIndex < 0 ||
-                        selectedDeviceIndex >= inputDevices.Count)
-                    {
-                        GlobalContext.OnError(Resources.Resources.InputDeviceNotSelectedError);
-                        break;
-                    }
+                    //if (InputDevices == null || SelectedDeviceIndex < 0 ||
+                    //    SelectedDeviceIndex >= InputDevices.Count)
+                    //{
+                    //    GlobalEvents.OnError(Resources.Resources.InputDeviceNotSelectedError);
+                    //    break;
+                    //}
 
                     // check network connection
                     var addrs = PlatformUtilities.Instance.NetworkInterfaceAddressList;
                     if (addrs.Count == 0)
-                        GlobalContext.OnError(Resources.Resources.NetworkNotConnectedError);
+                        GlobalEvents.OnError(Resources.Resources.NetworkNotConnectedError);
 
                     // validate port
-                    int portInt = Utils.TryParsePort(port);
-                    if (portInt == -1)
-                    {
-                        Port = "0";
-                        portInt = 0;
-                    }
+                    string currentPort = Port;
+                    if (Utils.TryParsePort(currentPort) == -1)
+                        Port = currentPort = "0";
 
                     Status = ServerStatus.Starting;
 
                     try
                     {
-                        if (server.Start(inputDevices[selectedDeviceIndex],
-                            (int)serverBufferDuration, portInt, ClientCallback,
-                            transmissionChannels, transmissionSampleRate, transmissionBitDepth != 16))
+                        if (server.Start(SelectedInputDevice.Key, (int)ServerBufferDuration,
+                            currentPort, (int)RecordingPollingPeriod, ClientCallback,
+                            TransmissionChannels, TransmissionSampleRate, TransmissionBitDepth != 16))
                         {
                             Status = ServerStatus.Started;
                             SetCurrentAddresses(addrs);
@@ -136,7 +123,7 @@ namespace SoundFlux.ViewModels
                     }
                     catch (BassException e)
                     {
-                        GlobalContext.OnError(string.Format(Resources.Resources.BassErrorFormat, e.Message));
+                        GlobalEvents.OnError(string.Format(Resources.Resources.BassErrorFormat, e.Message));
                     }
 
                     // return back unconnected status on connection error
@@ -160,16 +147,8 @@ namespace SoundFlux.ViewModels
         private double serverBufferDuration = DefaultServerBufferDuration;
         public const double DefaultServerBufferDuration = 2000;
 
-        public double RecordingPollingPeriod
-        {
-            get => server.RecordingPollingPeriod;
-            set
-            {
-                OnPropertyChanging();
-                server.RecordingPollingPeriod = (int)value;
-                OnPropertyChanged();
-            }
-        }
+        [ObservableProperty]
+        private double recordingPollingPeriod = DefaultRecordingPollingPeriod;
         public const double DefaultRecordingPollingPeriod = 30;
 
         [ObservableProperty]
@@ -205,26 +184,18 @@ namespace SoundFlux.ViewModels
 
         private void SetCurrentInputFormat()
         {
-            if (server == null || server.Device == null)
+            if (Status != ServerStatus.Started)
             {
                 CurrentInputFormat = null;
                 return;
             }
 
-            string channels = "---";
-            if (server.Device.Channels != 0)
-                channels = ChannelCountToString(server.Device.Channels);
-            else if (server.Stream != null && server.IsStarted)
-                channels = ChannelCountToString(server.Stream.Channels);
+            server.GetSamplesInfo(out int streamChannels,
+                out int streamSampleRate, out bool streamFloatSamples);
 
-            string sampleRate = "---";
-            if (server.Device.SampleRate != 0)
-                sampleRate = $"{server.Device.SampleRate} {Resources.Resources.HzSuffix}";
-            else if (server.Stream != null && server.IsStarted)
-                sampleRate = $"{server.Stream.SampleRate} {Resources.Resources.HzSuffix}";
-
-            string bitDepth = (server.Stream != null && server.IsStarted) ?
-                FloatSamplesFlagToString(server.Stream.FloatSamples) : "---";
+            string channels = ChannelCountToString(streamChannels);
+            string sampleRate = $"{streamSampleRate} {Resources.Resources.HzSuffix}";
+            string bitDepth = FloatSamplesFlagToString(streamFloatSamples);
 
             CurrentInputFormat = $"{channels}, {sampleRate}, {bitDepth}";
         }
@@ -280,10 +251,13 @@ namespace SoundFlux.ViewModels
             var sect = SharedSettings.Instance.GetSection("ServerViewModel");
             if (sect == null) return;
 
-            SelectedDeviceIndex = Utils.DeviceIndexFromHandle(inputDevices,
-                sect.GetInt("SelectedDeviceHandle", InputDevice.DefaultHandle), selectedDeviceIndex);
-            Port = sect.Get("Port", port);
-            ServerBufferDuration = sect.GetDouble("ServerBufferDuration", serverBufferDuration);
+            int selectedDeviceIndex = sect.GetInt("SelectedDeviceIndex", Server.DefaultInputDeviceIndex);
+            int idx = InputDevices.ContainsKey(selectedDeviceIndex) ?
+                selectedDeviceIndex : Server.DefaultInputDeviceIndex;
+            SelectedInputDevice = new(idx, InputDevices[idx]);
+
+            Port = sect.Get("Port", Port);
+            ServerBufferDuration = sect.GetDouble("ServerBufferDuration", ServerBufferDuration);
             RecordingPollingPeriod = sect.GetDouble("RecordingPollingPeriod", DefaultRecordingPollingPeriod);
 
             TransmissionChannels = sect.GetInt("TransmissionChannels", 0);
@@ -297,15 +271,14 @@ namespace SoundFlux.ViewModels
         private void SaveSettings()
         {
             var sect = SharedSettings.Instance.AddSection("ServerViewModel");
-            sect.Add("SelectedDeviceHandle", Utils.HandleFromDeviceIndex(
-                inputDevices, selectedDeviceIndex, InputDevice.DefaultHandle));
-            sect.Add("Port", port);
-            sect.Add("ServerBufferDuration", serverBufferDuration);
+            sect.Add("SelectedDeviceIndex", SelectedInputDevice.Key);
+            sect.Add("Port", Port);
+            sect.Add("ServerBufferDuration", ServerBufferDuration);
             sect.Add("RecordingPollingPeriod", RecordingPollingPeriod);
-            sect.Add("TransmissionChannels", transmissionChannels);
-            sect.Add("TransmissionSampleRate", transmissionSampleRate);
-            sect.Add("TransmissionBitDepth", transmissionBitDepth);
-            sect.Add("IsStarted", status == ServerStatus.Started);
+            sect.Add("TransmissionChannels", TransmissionChannels);
+            sect.Add("TransmissionSampleRate", TransmissionSampleRate);
+            sect.Add("TransmissionBitDepth", TransmissionBitDepth);
+            sect.Add("IsStarted", Status == ServerStatus.Started);
         }
 
         #endregion
@@ -314,10 +287,8 @@ namespace SoundFlux.ViewModels
 
         public ServerViewModel()
         {
-            RecordingPollingPeriod = DefaultRecordingPollingPeriod;
-
-            GlobalContext.OnExitEvent += SaveSettings;
-            InputDevices = InputDevice.List;
+            GlobalEvents.OnExitEvent += SaveSettings;
+            InputDevices = Server.InputDevices;
             LoadSettings();
         }
     }

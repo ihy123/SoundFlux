@@ -15,10 +15,10 @@ namespace SoundFlux.Views
                 ColumnDefinitions = new ColumnDefinitions("Auto * *")
             });
 
-            GlobalContext.OnExitEvent += () =>
+            GlobalEvents.OnExitEvent += () =>
                 SharedSettings.Instance.AddSection("MainView").Add("SelectedPage", MainTabControl.SelectedIndex);
 
-            GlobalContext.OnErrorEvent += msg =>
+            GlobalEvents.OnErrorEvent += msg =>
             {
                 Dispatcher.UIThread.Post(() =>
                 {

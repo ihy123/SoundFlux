@@ -15,26 +15,26 @@ namespace SoundFlux
             { "ru", "Русский" }
         };
 
-        private string currentThemeCode = "";
-        public string CurrentThemeCode
+        private string currentLangCode = "";
+        public string CurrentLangCode
         {
-            get => currentThemeCode;
+            get => currentLangCode;
             set
             {
-                if (currentThemeCode != value && SupportedLanguages.ContainsKey(value))
+                if (currentLangCode != value && SupportedLanguages.ContainsKey(value))
                 {
-                    currentThemeCode = value;
+                    currentLangCode = value;
 
                     var d = App.Current!.Resources.MergedDictionaries;
                     if (currentResourceInclude != null) d.Remove(currentResourceInclude);
 
                     currentResourceInclude = new ResourceInclude((System.Uri?)null)
                     {
-                        Source = new System.Uri($"avares://SoundFlux.Common/Assets/Languages/{currentThemeCode}.axaml")
+                        Source = new System.Uri($"avares://SoundFlux.Common/Assets/Languages/{currentLangCode}.axaml")
                     };
                     d.Add(currentResourceInclude);
 
-                    Thread.CurrentThread.CurrentUICulture = Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(currentThemeCode);
+                    Thread.CurrentThread.CurrentUICulture = Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(currentLangCode);
                 }
             }
         }

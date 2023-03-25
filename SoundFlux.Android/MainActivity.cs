@@ -22,7 +22,7 @@ namespace SoundFlux.Android
             base.OnStop();
             try
             {
-                GlobalContext.OnExit();
+                GlobalEvents.OnExit();
                 SharedSettings.Instance.Save();
             }
             catch (Exception e)
