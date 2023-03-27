@@ -12,14 +12,14 @@ namespace SoundFlux.ViewModels
             set
             {
                 if (SetProperty(ref language, value))
-                    LanguageManager.Instance.CurrentLangCode = language.Key;
+                    LanguageManager.CurrentLangCode = language.Key;
             }
         }
 
         public SettingsViewModel()
         {
-            Language = KeyValuePair.Create(LanguageManager.Instance.CurrentLangCode,
-                LanguageManager.SupportedLanguages[LanguageManager.Instance.CurrentLangCode]);
+            Language = KeyValuePair.Create(LanguageManager.CurrentLangCode,
+                LanguageManager.SupportedLanguages[LanguageManager.CurrentLangCode]);
         }
     }
 }

@@ -7,16 +7,16 @@ namespace SoundFlux
 {
     public class LanguageManager
     {
-        public static readonly LanguageManager Instance = new();
-
         public static readonly Dictionary<string, string> SupportedLanguages = new()
         {
             { "en", "English" },
             { "ru", "Русский" }
         };
 
-        private string currentLangCode = "";
-        public string CurrentLangCode
+        private static ResourceInclude? currentResourceInclude = null;
+        private static string currentLangCode = "";
+
+        public static string CurrentLangCode
         {
             get => currentLangCode;
             set
@@ -25,7 +25,7 @@ namespace SoundFlux
                 {
                     currentLangCode = value;
 
-                    var d = App.Current!.Resources.MergedDictionaries;
+                    var d = Avalonia.Application.Current!.Resources.MergedDictionaries;
                     if (currentResourceInclude != null) d.Remove(currentResourceInclude);
 
                     currentResourceInclude = new ResourceInclude((System.Uri?)null)
@@ -38,7 +38,5 @@ namespace SoundFlux
                 }
             }
         }
-
-        private ResourceInclude? currentResourceInclude = null;
     }
 }

@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ManagedBass;
+using SoundFlux.Services;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -203,35 +204,35 @@ namespace SoundFlux.ViewModels
 
         private void LoadSettings()
         {
-            var sect = SharedSettings.Instance.GetSection("ClientViewModel");
-            if (sect == null) return;
-
-            int selectedDeviceIndex = sect.GetInt("SelectedDeviceIndex", Client.DefaultOutputDeviceIndex);
+            int selectedDeviceIndex = SettingsManager.Instance.Get(
+                "ClientViewModel", "SelectedDeviceIndex", Client.DefaultOutputDeviceIndex);
             int idx = OutputDevices.ContainsKey(selectedDeviceIndex) ?
                 selectedDeviceIndex : Client.DefaultOutputDeviceIndex;
             SelectedOutputDevice = new(idx, OutputDevices[idx]);
 
-            Volume = sect.GetDouble("Volume", Volume);
-            IsMuted = sect.GetBool("IsMuted", IsMuted);
-            ConnectTimeOut = sect.GetDouble("ConnectTimeOut", ConnectTimeOut);
-            NetworkBufferDuration = sect.GetDouble("NetworkBufferDuration", NetworkBufferDuration);
-            PlaybackBufferDuration = sect.GetDouble("PlaybackBufferDuration", PlaybackBufferDuration);
+            Volume = SettingsManager.Instance.Get("ClientViewModel", "Volume", Volume);
+            IsMuted = SettingsManager.Instance.Get("ClientViewModel", "IsMuted", IsMuted);
+            ConnectTimeOut = SettingsManager.Instance.Get(
+                "ClientViewModel", "ConnectTimeOut", ConnectTimeOut);
+            NetworkBufferDuration = SettingsManager.Instance.Get(
+                "ClientViewModel", "NetworkBufferDuration", NetworkBufferDuration);
+            PlaybackBufferDuration = SettingsManager.Instance.Get(
+                "ClientViewModel", "PlaybackBufferDuration", PlaybackBufferDuration);
 
-            ServerAddress = sect.Get("ServerAddress");
+            ServerAddress = SettingsManager.Instance.Get("ClientViewModel", "ServerAddress", null);
             if (!string.IsNullOrEmpty(ServerAddress))
                 ConnectAsync();
         }
 
         private void SaveSettings()
         {
-            var sect = SharedSettings.Instance.AddSection("ClientViewModel");
-            sect.Add("SelectedDeviceIndex", SelectedOutputDevice.Key);
-            sect.Add("IsMuted", IsMuted);
-            sect.Add("Volume", Volume);
-            sect.Add("ConnectTimeOut", ConnectTimeOut);
-            sect.Add("NetworkBufferDuration", NetworkBufferDuration);
-            sect.Add("PlaybackBufferDuration", PlaybackBufferDuration);
-            sect.Add("ServerAddress",
+            SettingsManager.Instance.Add("ClientViewModel", "SelectedDeviceIndex", SelectedOutputDevice.Key);
+            SettingsManager.Instance.Add("ClientViewModel", "IsMuted", IsMuted);
+            SettingsManager.Instance.Add("ClientViewModel", "Volume", Volume);
+            SettingsManager.Instance.Add("ClientViewModel", "ConnectTimeOut", ConnectTimeOut);
+            SettingsManager.Instance.Add("ClientViewModel", "NetworkBufferDuration", NetworkBufferDuration);
+            SettingsManager.Instance.Add("ClientViewModel", "PlaybackBufferDuration", PlaybackBufferDuration);
+            SettingsManager.Instance.Add("ClientViewModel", "ServerAddress",
                 ServerAddress != null && (Status == ClientStatus.Connected || Status == ClientStatus.Connecting)
                 ? ServerAddress : string.Empty);
         }

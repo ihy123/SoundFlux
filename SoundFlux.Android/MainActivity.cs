@@ -3,6 +3,7 @@ using Android.Content.PM;
 using Android.OS;
 using Android.Util;
 using Avalonia.Android;
+using SoundFlux.Services;
 using System;
 
 namespace SoundFlux.Android
@@ -22,8 +23,7 @@ namespace SoundFlux.Android
             base.OnStop();
             try
             {
-                GlobalEvents.OnExit();
-                SharedSettings.Instance.Save();
+                ServiceRegistry.SettingsManager.Save();
             }
             catch (Exception e)
             {

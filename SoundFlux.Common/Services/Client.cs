@@ -1,33 +1,13 @@
 ﻿using ManagedBass;
 using System;
-using System.Collections.Generic;
 using System.Text;
 
-namespace SoundFlux
+namespace SoundFlux.Services
 {
     public class Client
     {
-        private int deviceIndex = 0, streamHandle = 0;
-
-        public const int DefaultOutputDeviceIndex = 1;
-
-        // output device infos mapped by device index
-        public static Dictionary<int, DeviceInfo> OutputDevices
-        {
-            get
-            {
-                // enumerate BASS output devices
-                var infos = new Dictionary<int, DeviceInfo>();
-                for (int i = 0; ; ++i)
-                {
-                    if (!Bass.GetDeviceInfo(i, out DeviceInfo info))
-                        break;
-                    if (info.IsEnabled)
-                        infos.Add(i, info);
-                }
-                return infos;
-            }
-        }
+        private int deviceIndex = AudioDeviceEnumerator.DefaultOutputDeviceIndex;
+        private int streamHandle = 0;
 
         public static int ConnectTimeOut
         {
@@ -66,7 +46,7 @@ namespace SoundFlux
         /// (server terminated, connection lost etc), but not by Stop()</param>
         /// <param name="reconnectedCallback"></param>
         /// <returns></returns>
-        public bool Start(int outputDeviceIndex, string serverAddress, string clientName,
+        public virtual bool Start(int outputDeviceIndex, string serverAddress, string clientName,
             int networkBufferDurationMs = 5000, int playbackBufferDurationMs = 500,
             Action? disconnectedCallback = null)
         {
@@ -104,7 +84,7 @@ namespace SoundFlux
             return Bass.ChannelPlay(streamHandle, false);
         }
 
-        public void Stop()
+        public virtual void Stop()
         {
             // ignore possible exception while selecting device
             try

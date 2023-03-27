@@ -7,6 +7,8 @@ using Android.Util;
 using AndroidX.Core.App;
 using Avalonia;
 using Avalonia.Android;
+using SoundFlux.Android.Services;
+using SoundFlux.Services;
 using System;
 using Application = Android.App.Application;
 
@@ -19,8 +21,11 @@ namespace SoundFlux.Android
         {
             try
             {
-                new PlatformUtilsAndroid(ApplicationContext!.FilesDir!.AbsolutePath + '/');
-                SharedSettings.Instance.Load();
+                var sm = new SettingsManagerAndroid(ApplicationContext!.FilesDir!.AbsolutePath + '/');
+                ServiceRegistry.SettingsManager = sm;
+                ServiceRegistry.NetHelper = new NetHelper();
+                ServiceRegistry.ErrorHandler = new AlertDialogErrorHandler(ApplicationContext);
+                sm.Load();
             }
             catch (Exception e)
             {

@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using Avalonia.Threading;
+using SoundFlux.Services;
 
 namespace SoundFlux.Views
 {
@@ -15,21 +15,20 @@ namespace SoundFlux.Views
                 ColumnDefinitions = new ColumnDefinitions("Auto * *")
             });
 
-            GlobalEvents.OnExitEvent += () =>
-                SharedSettings.Instance.AddSection("MainView").Add("SelectedPage", MainTabControl.SelectedIndex);
+            //GlobalEvents.OnExitEvent += () =>
+            //    SharedSettings.Instance.AddSection("MainView").Add("SelectedPage", MainTabControl.SelectedIndex);
 
-            GlobalEvents.OnErrorEvent += msg =>
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    DefaultPopupText.Text = msg;
-                    DefaultPopup.Open();
-                });
-            };
+            //GlobalEvents.OnErrorEvent += msg =>
+            //{
+            //    Dispatcher.UIThread.Post(() =>
+            //    {
+            //        DefaultPopupText.Text = msg;
+            //        DefaultPopup.Open();
+            //    });
+            //};
 
-            var sect = SharedSettings.Instance.GetSection("MainView");
-            if (sect == null) return;
-            MainTabControl.SelectedIndex = sect.GetInt("SelectedPage");
+            MainTabControl.SelectedIndex =
+                ServiceRegistry.SettingsManager.Get("MainView", "SelectedPage", 0);
         }
     }
 }

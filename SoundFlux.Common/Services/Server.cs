@@ -1,51 +1,38 @@
 ﻿using ManagedBass;
 using ManagedBass.Enc;
 using System;
-using System.Collections.Generic;
 using System.Text;
 
-namespace SoundFlux
+namespace SoundFlux.Services
 {
     public class Server
     {
-        public delegate bool ClientCallback(bool isConnecting, string clientAddress, string? clientName);
+        public delegate bool ClientCallback(bool isConnecting,
+            string clientAddress, string? clientName);
 
-        private int deviceIndex = 0, streamHandle = 0;
+        private int deviceIndex = AudioDeviceEnumerator.DefaultInputDeviceIndex;
+        private int streamHandle = 0;
         private ClientCallback? callback;
         private EncodeClientProcedure? encodeClientProc;
-
-        public const int DefaultInputDeviceIndex = 0;
-
-        // input device infos mapped by device index
-        public static Dictionary<int, DeviceInfo> InputDevices
-        {
-            get
-            {
-                // enumerate BASS input devices
-                var infos = new Dictionary<int, DeviceInfo>();
-                for (int i = 0; ; ++i)
-                {
-                    if (!Bass.RecordGetDeviceInfo(i, out DeviceInfo info))
-                        break;
-                    if (info.IsEnabled)
-                        infos.Add(i, info);
-                }
-                return infos;
-            }
-        }
 
         public int CurrentPort { get; private set; }
 
         public Server()
             => Bass.Configure(Configuration.LoopbackRecording, true);
 
-        public bool Start(int inputDeviceIndex, int serverBufferDurationMs, string port,
+        public virtual bool Start(int inputDeviceIndex, int serverBufferDurationMs, string port,
             int recordingPollingPeriod, ClientCallback? clientCallback = null,
             int transmissionChannels = 0, int transmissionSampleRate = 0,
             bool transmissionFloatSamples = true)
         {
             deviceIndex = inputDeviceIndex;
             callback = clientCallback;
+
+            // set encode client proc
+            if (callback == null)
+                encodeClientProc = null;
+            else
+                encodeClientProc = EncodeClientProc;
 
             if (!Bass.RecordInit(deviceIndex))
             {
@@ -109,7 +96,6 @@ namespace SoundFlux
                 throw new BassException();
 
             // start server
-            InitEncodeClientProc();
             CurrentPort = BassEnc.ServerInit(encodeHandle, port, bufSize, 512, 0, encodeClientProc, 0);
             if (CurrentPort == 0)
                 throw new BassException();
@@ -141,7 +127,7 @@ namespace SoundFlux
             floatSamples = info.Resolution == Resolution.Float;
         }
 
-        public void Stop()
+        public virtual void Stop()
         {
             // ignore possible exception while selecting device
             try
@@ -157,49 +143,42 @@ namespace SoundFlux
             encodeClientProc = null;
         }
 
-        private void InitEncodeClientProc()
+        private bool EncodeClientProc(int handle,
+            bool isConnecting, string address, IntPtr headers, IntPtr user)
         {
-            if (callback == null)
-                encodeClientProc = null;
-            else
+            if (headers == 0)
+                return callback!(isConnecting, address, null);
+
+            string? name = null;
+
+            unsafe
             {
-                encodeClientProc = (a, connecting, addr, hdrs, u) =>
+                bool isNull = false, prevIsNull = false;
+                byte* ptr = (byte*)headers;
+                for (int i = 0; ; ++i)
                 {
-                    if (hdrs == 0)
-                        return callback(connecting, addr, null);
-
-                    string? name = null;
-
-                    unsafe
+                    isNull = ptr[i] == 0;
+                    if (isNull)
                     {
-                        bool isNull = false, prevIsNull = false;
-                        byte* ptr = (byte*)hdrs;
-                        for (int i = 0; ; ++i)
+                        if (prevIsNull)
+                            break;
+
+                        // process current header
+                        var parts = Encoding.ASCII.GetString(ptr, i).Split(':');
+                        if (parts[0].Contains("sfname", StringComparison.OrdinalIgnoreCase))
                         {
-                            isNull = ptr[i] == 0;
-                            if (isNull)
-                            {
-                                if (prevIsNull)
-                                    break;
-
-                                // process current header
-                                var parts = Encoding.ASCII.GetString(ptr, i).Split(':');
-                                if (parts[0].Contains("sfname", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    name = parts[1].Trim(' ');
-                                    break;
-                                }
-
-                                ptr += i + 1;
-                                i = 0;
-                            }
-                            prevIsNull = isNull;
+                            name = parts[1].Trim(' ');
+                            break;
                         }
-                    }
 
-                    return callback(connecting, addr, name);
-                };
+                        ptr += i + 1;
+                        i = 0;
+                    }
+                    prevIsNull = isNull;
+                }
             }
+
+            return callback!(isConnecting, address, name);
         }
     }
 }

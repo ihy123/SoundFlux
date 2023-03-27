@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
+using SoundFlux.Services;
 using SoundFlux.Views;
 using System.Threading;
 
@@ -11,19 +12,20 @@ namespace SoundFlux
     {
         public override void Initialize()
         {
-            GlobalEvents.OnExitEvent += () =>
-            {
-                var sect = SharedSettings.Instance.AddSection("Interface");
-                sect.Add("Language", LanguageManager.Instance.CurrentLangCode);
-            };
+            //GlobalEvents.OnExitEvent += () =>
+            //{
+            //    var sect = SharedSettings.Instance.AddSection("Interface");
+            //    sect.Add("Language", LanguageManager.Instance.CurrentLangCode);
+            //};
 
-            var sect = SharedSettings.Instance.GetSection("Interface");
-            string? lang = sect?.Get("Language");
+            string? lang = ServiceRegistry.SettingsManager.Get("Interface", "Language", null);
 
-            if (string.IsNullOrEmpty(lang)) lang = Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
-            if (string.IsNullOrEmpty(lang)) lang = "en";
+            if (string.IsNullOrEmpty(lang))
+                lang = Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
+            if (string.IsNullOrEmpty(lang))
+                lang = "en";
 
-            LanguageManager.Instance.CurrentLangCode = lang;
+            LanguageManager.CurrentLangCode = lang;
 
             RequestedThemeVariant = ThemeVariant.Light;
 

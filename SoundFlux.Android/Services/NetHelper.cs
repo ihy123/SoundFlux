@@ -1,26 +1,18 @@
 ﻿using Android.OS;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.NetworkInformation;
 using Android.App;
 using Android.Provider;
+using SoundFlux.Services;
+using System.Collections.Generic;
+using System.Net.NetworkInformation;
+using System.Linq;
 
-namespace SoundFlux.Android
+namespace SoundFlux.Android.Services
 {
-    internal class PlatformUtilsAndroid : PlatformUtilities
+    internal class NetHelper : INetHelper
     {
         private static readonly BuildVersionCodes SdkVer = Build.VERSION.SdkInt;
-        private string configPath;
 
-        public PlatformUtilsAndroid(string configPath)
-        {
-            Instance = this;
-            this.configPath = configPath;
-        }
-
-        public override string SettingsDirectory => configPath;
-
-        public override string DeviceName
+        public string DeviceName
         {
             get
             {
@@ -38,7 +30,7 @@ namespace SoundFlux.Android
             }
         }
 
-        public override List<string> NetworkInterfaceAddressList
+        public List<string> NetworkInterfaceAddressList
         {
             get
             {

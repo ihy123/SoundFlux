@@ -3,6 +3,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ManagedBass;
+using SoundFlux.Services;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -248,37 +249,37 @@ namespace SoundFlux.ViewModels
 
         private void LoadSettings()
         {
-            var sect = SharedSettings.Instance.GetSection("ServerViewModel");
-            if (sect == null) return;
+            //var sect = SharedSettings.Instance.GetSection("ServerViewModel");
+            //if (sect == null) return;
 
-            int selectedDeviceIndex = sect.GetInt("SelectedDeviceIndex", Server.DefaultInputDeviceIndex);
-            int idx = InputDevices.ContainsKey(selectedDeviceIndex) ?
-                selectedDeviceIndex : Server.DefaultInputDeviceIndex;
-            SelectedInputDevice = new(idx, InputDevices[idx]);
+            //int selectedDeviceIndex = sect.GetInt("SelectedDeviceIndex", Server.DefaultInputDeviceIndex);
+            //int idx = InputDevices.ContainsKey(selectedDeviceIndex) ?
+            //    selectedDeviceIndex : Server.DefaultInputDeviceIndex;
+            //SelectedInputDevice = new(idx, InputDevices[idx]);
 
-            Port = sect.Get("Port", Port);
-            ServerBufferDuration = sect.GetDouble("ServerBufferDuration", ServerBufferDuration);
-            RecordingPollingPeriod = sect.GetDouble("RecordingPollingPeriod", DefaultRecordingPollingPeriod);
+            //Port = sect.Get("Port", Port);
+            //ServerBufferDuration = sect.GetDouble("ServerBufferDuration", ServerBufferDuration);
+            //RecordingPollingPeriod = sect.GetDouble("RecordingPollingPeriod", DefaultRecordingPollingPeriod);
 
-            TransmissionChannels = sect.GetInt("TransmissionChannels", 0);
-            TransmissionSampleRate = sect.GetInt("TransmissionSampleRate", 0);
-            TransmissionBitDepth = sect.GetInt("TransmissionBitDepth", 0);
+            //TransmissionChannels = sect.GetInt("TransmissionChannels", 0);
+            //TransmissionSampleRate = sect.GetInt("TransmissionSampleRate", 0);
+            //TransmissionBitDepth = sect.GetInt("TransmissionBitDepth", 0);
 
-            if (sect.GetBool("IsStarted"))
-                StartAsync();
+            //if (sect.GetBool("IsStarted"))
+            //    StartAsync();
         }
 
         private void SaveSettings()
         {
-            var sect = SharedSettings.Instance.AddSection("ServerViewModel");
-            sect.Add("SelectedDeviceIndex", SelectedInputDevice.Key);
-            sect.Add("Port", Port);
-            sect.Add("ServerBufferDuration", ServerBufferDuration);
-            sect.Add("RecordingPollingPeriod", RecordingPollingPeriod);
-            sect.Add("TransmissionChannels", TransmissionChannels);
-            sect.Add("TransmissionSampleRate", TransmissionSampleRate);
-            sect.Add("TransmissionBitDepth", TransmissionBitDepth);
-            sect.Add("IsStarted", Status == ServerStatus.Started);
+            //var sect = SharedSettings.Instance.AddSection("ServerViewModel");
+            //sect.Add("SelectedDeviceIndex", SelectedInputDevice.Key);
+            //sect.Add("Port", Port);
+            //sect.Add("ServerBufferDuration", ServerBufferDuration);
+            //sect.Add("RecordingPollingPeriod", RecordingPollingPeriod);
+            //sect.Add("TransmissionChannels", TransmissionChannels);
+            //sect.Add("TransmissionSampleRate", TransmissionSampleRate);
+            //sect.Add("TransmissionBitDepth", TransmissionBitDepth);
+            //sect.Add("IsStarted", Status == ServerStatus.Started);
         }
 
         #endregion
