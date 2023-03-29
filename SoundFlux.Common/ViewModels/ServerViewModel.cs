@@ -24,7 +24,17 @@ namespace SoundFlux.ViewModels
         [ObservableProperty]
         private Dictionary<int, DeviceInfo> inputDevices;
 
-        [ObservableProperty]
+        public KeyValuePair<int, DeviceInfo> SelectedInputDevice
+        {
+            get => selectedInputDevice;
+            set
+            {
+                OnPropertyChanging();
+                selectedInputDevice = value;
+                server.NextInputDeviceIndex = selectedInputDevice.Key;
+                OnPropertyChanged();
+            }
+        }
         private KeyValuePair<int, DeviceInfo> selectedInputDevice;
 
         public bool IsInputDeviceDropDownOpen
@@ -40,9 +50,9 @@ namespace SoundFlux.ViewModels
         {
             lock (refreshDevicesMutex)
             {
-                var list = Server.InputDevices;
-                int idx = list.TryGetValue(SelectedInputDevice.Key, out DeviceInfo val) ?
-                    SelectedInputDevice.Key : Server.DefaultInputDeviceIndex;
+                var list = AudioDeviceEnumerator.InputDevices;
+                int idx = list.ContainsKey(SelectedInputDevice.Key) ?
+                    SelectedInputDevice.Key : AudioDeviceEnumerator.DefaultInputDeviceIndex;
 
                 Dispatcher.UIThread.Post(() =>
                 {
@@ -73,6 +83,8 @@ namespace SoundFlux.ViewModels
         [ObservableProperty]
         private ServerStatus status = ServerStatus.NotStarted;
 
+        private Server server;
+
         [RelayCommand]
         private void StartAsync() => Task.Run(Start);
 
@@ -90,41 +102,34 @@ namespace SoundFlux.ViewModels
                     Status = ServerStatus.NotStarted;
                     break;
                 case ServerStatus.NotStarted:
-                    // validate selected device
-                    //if (InputDevices == null || SelectedDeviceIndex < 0 ||
-                    //    SelectedDeviceIndex >= InputDevices.Count)
-                    //{
-                    //    GlobalEvents.OnError(Resources.Resources.InputDeviceNotSelectedError);
-                    //    break;
-                    //}
-
                     // check network connection
-                    var addrs = PlatformUtilities.Instance.NetworkInterfaceAddressList;
+                    var addrs = ServiceRegistry.NetHelper.NetworkInterfaceAddressList;
                     if (addrs.Count == 0)
-                        GlobalEvents.OnError(Resources.Resources.NetworkNotConnectedError);
+                    {
+                        ServiceRegistry.ErrorHandler.Error(Resources.Resources.NetworkNotConnectedError);
+                        return;
+                    }
 
                     // validate port
-                    string currentPort = Port;
-                    if (Utils.TryParsePort(currentPort) == -1)
-                        Port = currentPort = "0";
+                    if (Utils.TryParsePort(Port) == -1)
+                        Port = "0";
 
                     Status = ServerStatus.Starting;
 
                     try
                     {
-                        if (server.Start(SelectedInputDevice.Key, (int)ServerBufferDuration,
-                            currentPort, (int)RecordingPollingPeriod, ClientCallback,
-                            TransmissionChannels, TransmissionSampleRate, TransmissionBitDepth != 16))
+                        if (server.Start(ClientCallback))
                         {
                             Status = ServerStatus.Started;
                             SetCurrentAddresses(addrs);
-                            SetCurrentInputFormat();
-                            return;
+                            Port = server.CurrentPort.ToString();
+                            break;
                         }
                     }
                     catch (BassException e)
                     {
-                        GlobalEvents.OnError(string.Format(Resources.Resources.BassErrorFormat, e.Message));
+                        ServiceRegistry.ErrorHandler.Error(string.Format(
+                            Resources.Resources.BassErrorFormat, e.Message));
                     }
 
                     // return back unconnected status on connection error
@@ -138,22 +143,67 @@ namespace SoundFlux.ViewModels
 
         #region Advanced settings
 
-        [ObservableProperty]
-        private string port = "0";
+        public string Port
+        {
+            get => server.NextPort;
+            set
+            {
+                OnPropertyChanging();
+                server.NextPort = value;
+                OnPropertyChanged();
+            }
+        }
 
-        [ObservableProperty]
-        private string? currentInputFormat = null;
+        public double ServerBufferDuration
+        {
+            get => server.ServerBufferDuration;
+            set
+            {
+                OnPropertyChanging();
+                server.ServerBufferDuration = value;
+                OnPropertyChanged();
+            }
+        }
 
-        [ObservableProperty]
-        private double serverBufferDuration = DefaultServerBufferDuration;
-        public const double DefaultServerBufferDuration = 2000;
+        public double RecordingPollingPeriod
+        {
+            get => server.RecordingPollingPeriod;
+            set
+            {
+                OnPropertyChanging();
+                server.RecordingPollingPeriod = value;
+                OnPropertyChanged();
+            }
+        }
 
-        [ObservableProperty]
-        private double recordingPollingPeriod = DefaultRecordingPollingPeriod;
-        public const double DefaultRecordingPollingPeriod = 30;
+        public string? CurrentInputFormat
+        {
+            get
+            {
+                if (Status != ServerStatus.Started)
+                    return null;
 
-        [ObservableProperty]
-        private int transmissionChannels;
+                server.GetSamplesInfo(out int streamChannels,
+                    out int streamSampleRate, out bool streamFloatSamples);
+
+                string channels = ChannelCountToString(streamChannels);
+                string sampleRate = $"{streamSampleRate} {Resources.Resources.HzSuffix}";
+                string bitDepth = FloatSamplesFlagToString(streamFloatSamples);
+
+                return $"{channels}, {sampleRate}, {bitDepth}";
+            }
+        }
+
+        public int TransmissionChannels
+        {
+            get => server.TransmissionChannels;
+            set
+            {
+                OnPropertyChanging();
+                server.TransmissionChannels = value;
+                OnPropertyChanged();
+            }
+        }
 
         public static readonly IValueConverter TransmissionChannelsConverter =
             new FuncValueConverter<int, string>(c =>
@@ -163,8 +213,16 @@ namespace SoundFlux.ViewModels
                 return Resources.Resources.Default;
             });
 
-        [ObservableProperty]
-        private int transmissionSampleRate;
+        public int TransmissionSampleRate
+        {
+            get => server.TransmissionSampleRate;
+            set
+            {
+                OnPropertyChanging();
+                server.TransmissionSampleRate = value;
+                OnPropertyChanged();
+            }
+        }
 
         public static readonly IValueConverter TransmissionSampleRateConverter =
             new FuncValueConverter<int, string>(s =>
@@ -173,7 +231,17 @@ namespace SoundFlux.ViewModels
                 return $"{s} {Resources.Resources.HzSuffix}";
             });
 
-        [ObservableProperty]
+        public int TransmissionBitDepth
+        {
+            get => transmissionBitDepth;
+            set
+            {
+                OnPropertyChanging();
+                transmissionBitDepth = value;
+                server.TransmissionFloatSamples = transmissionBitDepth != 16;
+                OnPropertyChanged();
+            }
+        }
         private int transmissionBitDepth;
 
         public static readonly IValueConverter TransmissionBitDepthConverter =
@@ -184,22 +252,7 @@ namespace SoundFlux.ViewModels
             });
 
         private void SetCurrentInputFormat()
-        {
-            if (Status != ServerStatus.Started)
-            {
-                CurrentInputFormat = null;
-                return;
-            }
-
-            server.GetSamplesInfo(out int streamChannels,
-                out int streamSampleRate, out bool streamFloatSamples);
-
-            string channels = ChannelCountToString(streamChannels);
-            string sampleRate = $"{streamSampleRate} {Resources.Resources.HzSuffix}";
-            string bitDepth = FloatSamplesFlagToString(streamFloatSamples);
-
-            CurrentInputFormat = $"{channels}, {sampleRate}, {bitDepth}";
-        }
+            => OnPropertyChanged(nameof(CurrentInputFormat));
 
         private static string ChannelCountToString(int channels)
         {
@@ -217,8 +270,8 @@ namespace SoundFlux.ViewModels
         [RelayCommand]
         private void ResetAdvancedSettings()
         {
-            ServerBufferDuration = DefaultServerBufferDuration;
-            RecordingPollingPeriod = DefaultRecordingPollingPeriod;
+            ServerBufferDuration = Server.DefaultServerBufferDuration;
+            RecordingPollingPeriod = Server.DefaultRecordingPollingPeriod;
             TransmissionChannels = TransmissionSampleRate = TransmissionBitDepth = 0;
             Port = "0";
         }
@@ -249,48 +302,30 @@ namespace SoundFlux.ViewModels
 
         private void LoadSettings()
         {
-            //var sect = SharedSettings.Instance.GetSection("ServerViewModel");
-            //if (sect == null) return;
-
-            //int selectedDeviceIndex = sect.GetInt("SelectedDeviceIndex", Server.DefaultInputDeviceIndex);
-            //int idx = InputDevices.ContainsKey(selectedDeviceIndex) ?
-            //    selectedDeviceIndex : Server.DefaultInputDeviceIndex;
-            //SelectedInputDevice = new(idx, InputDevices[idx]);
-
-            //Port = sect.Get("Port", Port);
-            //ServerBufferDuration = sect.GetDouble("ServerBufferDuration", ServerBufferDuration);
-            //RecordingPollingPeriod = sect.GetDouble("RecordingPollingPeriod", DefaultRecordingPollingPeriod);
-
-            //TransmissionChannels = sect.GetInt("TransmissionChannels", 0);
-            //TransmissionSampleRate = sect.GetInt("TransmissionSampleRate", 0);
-            //TransmissionBitDepth = sect.GetInt("TransmissionBitDepth", 0);
-
-            //if (sect.GetBool("IsStarted"))
-            //    StartAsync();
+            var sm = ServiceRegistry.SettingsManager;
+            if (sm.Get("Server", "IsStarted", false))
+                StartAsync();
         }
 
-        private void SaveSettings()
+        public void SaveSettings()
         {
-            //var sect = SharedSettings.Instance.AddSection("ServerViewModel");
-            //sect.Add("SelectedDeviceIndex", SelectedInputDevice.Key);
-            //sect.Add("Port", Port);
-            //sect.Add("ServerBufferDuration", ServerBufferDuration);
-            //sect.Add("RecordingPollingPeriod", RecordingPollingPeriod);
-            //sect.Add("TransmissionChannels", TransmissionChannels);
-            //sect.Add("TransmissionSampleRate", TransmissionSampleRate);
-            //sect.Add("TransmissionBitDepth", TransmissionBitDepth);
-            //sect.Add("IsStarted", Status == ServerStatus.Started);
+            var sm = ServiceRegistry.SettingsManager;
+            sm.Set("Server", "IsStarted", Status == ServerStatus.Started);
         }
 
         #endregion
 
-        private Server server = new();
-
-        public ServerViewModel()
+#pragma warning disable CS8618
+        public ServerViewModel(Server server)
         {
-            GlobalEvents.OnExitEvent += SaveSettings;
-            InputDevices = Server.InputDevices;
+            this.server = server;
+            InputDevices = AudioDeviceEnumerator.InputDevices;
             LoadSettings();
+
+            TransmissionBitDepth = server.TransmissionFloatSamples ? 0 : 16;
+            if (InputDevices.TryGetValue(server.NextInputDeviceIndex, out var info))
+                SelectedInputDevice = new(server.NextInputDeviceIndex, info);
         }
+#pragma warning restore CS8618
     }
 }

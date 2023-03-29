@@ -9,28 +9,49 @@
             mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="600"
             x:Class="SoundFlux.Views.SettingsView" VerticalAlignment="Center">
 
-	<!-- Language -->
+	<!-- Settings -->
 
 	<Panel>
 		<Border BorderBrush="{DynamicResource ThemeBorderLowBrush}"
 				BorderThickness="1" VerticalAlignment="Center" Margin="5 0"/>
 		<TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
 				   Background="{DynamicResource	PrimaryBackground}" Padding="5 0"
-				   FontSize="16" Text="{DynamicResource Lang.LanguageLabel}"/>
+				   FontSize="16" Text="{DynamicResource Lang.SettingsLabel}"/>
 	</Panel>
 
-	<ComboBox HorizontalAlignment="Center" Classes="custom" Margin="10"
-			  SelectedItem="{Binding Language, Mode=TwoWay}"
-			  ItemsSource="{x:Static sf:LanguageManager.SupportedLanguages}">
-
-		<ComboBox.ItemTemplate>
-			<DataTemplate>
-				<TextBlock Text="{Binding Value}"/>
-			</DataTemplate>
-		</ComboBox.ItemTemplate>
+	<Grid ColumnDefinitions="Auto *" RowDefinitions="Auto Auto" Margin="10">
 		
-	</ComboBox>
+		<!-- Minimize to tray -->
+		<TextBlock Grid.Column="0" Grid.Row="0" Margin="0 0 0 10"
+				   IsVisible="{x:Static viewModels:TrayIconViewModel.CanMinimizeToTray}"
+				   VerticalAlignment="Center" HorizontalAlignment="Right"
+				   Background="{DynamicResource	PrimaryBackground}"
+				   Text="{DynamicResource Lang.MinimizeToTrayLabel}"/>
 
+		<CheckBox DataContext="{Binding TrayIconVM, Mode=OneWay}" Grid.Column="1" Grid.Row="0"
+				  IsVisible="{x:Static viewModels:TrayIconViewModel.CanMinimizeToTray}" Margin="10 0 0 10"
+				  VerticalAlignment="Center" IsChecked="{Binding IsMinimizeToTrayEnabled}"/>
+
+		<!-- Language -->
+		<TextBlock Grid.Column="0" Grid.Row="1"
+				   VerticalAlignment="Center" HorizontalAlignment="Right"
+				   Background="{DynamicResource	PrimaryBackground}"
+				   Text="{DynamicResource Lang.LanguageLabel}"/>
+
+		<ComboBox Grid.Column="1" Grid.Row="1" Classes="custom" HorizontalAlignment="Left"
+				  SelectedItem="{Binding Language, Mode=TwoWay}" Margin="10 0 0 0"
+				  ItemsSource="{x:Static sf:LanguageManager.SupportedLanguages}">
+
+			<ComboBox.ItemTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding Value}"/>
+				</DataTemplate>
+			</ComboBox.ItemTemplate>
+
+		</ComboBox>
+
+	</Grid>
+	
 	<!-- About -->
 	
 	<Panel>

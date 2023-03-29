@@ -6,28 +6,66 @@ namespace SoundFlux.Services
 {
     public class Client
     {
-        private int deviceIndex = AudioDeviceEnumerator.DefaultOutputDeviceIndex;
         private int streamHandle = 0;
 
+        public int CurrentOutputDeviceIndex { get; private set; } = -1;
+
+        public int NextOutputDeviceIndex { get; set; } = AudioDeviceEnumerator.DefaultOutputDeviceIndex;
+
+        // in ms; affects only clients started after
         public static int ConnectTimeOut
         {
             get => Bass.NetTimeOut;
             set => Bass.NetTimeOut = value;
         }
+        public const double DefaultConnectTimeOut = 5000;
 
+        // in ms; affects only clients started after
+        public static int NetworkBufferDuration
+        {
+            get => Bass.NetBufferLength;
+            set => Bass.NetBufferLength = value;
+        }
+        public const double DefaultNetworkBufferDuration = 5000;
+
+        // in ms; affects only clients started after
+        public static int PlaybackBufferDuration
+        {
+            get => Bass.PlaybackBufferLength;
+            set => Bass.PlaybackBufferLength = value;
+        }
+        public const double DefaultPlaybackBufferDuration = 500;
+
+        // values from 0.0 to 1.0 (but can go above 1.0, it will amplify)
         public double Volume
         {
-            get => streamHandle == 0 ? 1.0 :
-                Bass.ChannelGetAttribute(streamHandle, ChannelAttribute.Volume);
+            get => _volume;
             set
             {
-                if (streamHandle == 0)
-                    throw new InvalidOperationException("Client is not started");
+                _volume = value;
 
-                if (!Bass.ChannelSetAttribute(streamHandle, ChannelAttribute.Volume, value))
+                if (streamHandle == 0) return;
+
+                if(!Bass.ChannelSetAttribute(streamHandle,
+                    ChannelAttribute.Volume, isMuted ? 0.0 : _volume))
                     throw new BassException();
             }
         }
+        private double _volume = 1.0;
+
+        public bool IsMuted
+        {
+            get => isMuted;
+            set
+            {
+                if (isMuted == value)
+                    return;
+
+                isMuted = value;
+                Volume = _volume;
+            }
+        }
+        private bool isMuted = false;
 
         public Client()
         {
@@ -35,34 +73,20 @@ namespace SoundFlux.Services
             Bass.DeviceNonStop = true;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="serverAddress"></param>
-        /// <param name="clientName"></param>
-        /// <param name="networkBufferDurationMs"></param>
-        /// <param name="playbackBufferDurationMs"></param>
-        /// <param name="disconnectedCallback">Invoked when disconnected by an external reason
-        /// (server terminated, connection lost etc), but not by Stop()</param>
-        /// <param name="reconnectedCallback"></param>
-        /// <returns></returns>
-        public virtual bool Start(int outputDeviceIndex, string serverAddress, string clientName,
-            int networkBufferDurationMs = 5000, int playbackBufferDurationMs = 500,
+        // disconnectedCallback: Invoked when disconnected by an external reason
+        // (server terminated, connection lost etc), but not by Stop()
+        public virtual bool Start(string serverAddress, string clientName,
             Action? disconnectedCallback = null)
         {
-            deviceIndex = outputDeviceIndex;
-
-            if (!Bass.Init(deviceIndex))
+            if (!Bass.Init(NextOutputDeviceIndex))
             {
                 if (Bass.LastError != Errors.Already)
                     throw new BassException();
 
                 // if device is already initialized, set it
-                Bass.CurrentDevice = deviceIndex;
+                Bass.CurrentDevice = NextOutputDeviceIndex;
             }
-
-            Bass.NetBufferLength = networkBufferDurationMs;
-            Bass.PlaybackBufferLength = playbackBufferDurationMs;
+            CurrentOutputDeviceIndex = NextOutputDeviceIndex;
 
             // construct url
             StringBuilder url = new("http://");
@@ -80,6 +104,9 @@ namespace SoundFlux.Services
                 0, (h, c, d, u) => disconnectedCallback.Invoke()))
                 throw new BassException();
 
+            // set current volume
+            Volume = _volume;
+
             // play stream
             return Bass.ChannelPlay(streamHandle, false);
         }
@@ -89,13 +116,40 @@ namespace SoundFlux.Services
             // ignore possible exception while selecting device
             try
             {
-                Bass.CurrentDevice = deviceIndex;
-                Bass.Free();
+                if (CurrentOutputDeviceIndex != -1)
+                {
+                    Bass.CurrentDevice = CurrentOutputDeviceIndex;
+                    Bass.Free();
+                }
             }
             catch (BassException) { }
 
             Bass.ChannelStop(streamHandle);
-            deviceIndex = streamHandle = 0;
+            CurrentOutputDeviceIndex = -1;
+            streamHandle = 0;
+        }
+
+        public virtual void SaveSettings()
+        {
+            var sm = ServiceRegistry.SettingsManager;
+            sm.Set("Client", "NextOutputDeviceIndex",
+                CurrentOutputDeviceIndex != -1 ? CurrentOutputDeviceIndex : NextOutputDeviceIndex);
+            sm.Set("Client", "IsMuted", IsMuted);
+            sm.Set("Client", "Volume", Volume);
+            sm.Set("Client", "ConnectTimeOut", ConnectTimeOut);
+            sm.Set("Client", "NetworkBufferDuration", NetworkBufferDuration);
+            sm.Set("Client", "PlaybackBufferDuration", PlaybackBufferDuration);
+        }
+
+        public virtual void LoadSettings()
+        {
+            var sm = ServiceRegistry.SettingsManager;
+            NextOutputDeviceIndex = sm.Get("Client", "NextOutputDeviceIndex", NextOutputDeviceIndex);
+            IsMuted = sm.Get("Client", "IsMuted", IsMuted);
+            Volume = sm.Get("Client", "Volume", Volume);
+            ConnectTimeOut = sm.Get("Client", "ConnectTimeOut", ConnectTimeOut);
+            NetworkBufferDuration = sm.Get("Client", "NetworkBufferDuration", NetworkBufferDuration);
+            PlaybackBufferDuration = sm.Get("Client", "PlaybackBufferDuration", PlaybackBufferDuration);
         }
     }
 }

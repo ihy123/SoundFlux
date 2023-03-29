@@ -7,22 +7,45 @@ namespace SoundFlux.Android.Services
 {
     internal class AlertDialogErrorHandler : IErrorHandler
     {
-        private AlertDialog? dialog;
+        private class DefaultAlertBroadcastReceiver : BroadcastReceiver
+        {
+            public override void OnReceive(Context? context, Intent? intent)
+            {
+                Intent alert = new(Application.Context, typeof(AlertActivity));
+                alert.PutExtra(AlertIntentMessageName,
+                    intent?.GetStringExtra(AlertIntentMessageName));
+                alert.AddFlags(ActivityFlags.NewTask);
+
+                Application.Context.StartActivity(alert);
+
+                InvokeAbortBroadcast();
+            }
+        }
+
+        public const string AlertBroadcastAction = "AlertDialogErrorHandler:BROADCAST";
+        public const string AlertIntentMessageName = "message";
+
+        private DefaultAlertBroadcastReceiver receiver = new();
 
         public void Error(string message)
         {
             Log.Error(nameof(AlertDialogErrorHandler), message);
-            dialog?.SetMessage(message);
-            dialog?.Show();
+
+            var intent = new Intent(AlertBroadcastAction);
+            intent.PutExtra(AlertIntentMessageName, message);
+            Application.Context.SendOrderedBroadcast(intent, null);
         }
 
-        public AlertDialogErrorHandler(Context appContext)
+        public AlertDialogErrorHandler()
         {
-            dialog = new AlertDialog.Builder(appContext)
-                .SetCancelable(true)?
-                .SetTitle("Exception")?
-                .SetPositiveButton("OK", (IDialogInterfaceOnClickListener?)null)?
-                .Create();
+            Application.Context.RegisterReceiver(
+                receiver, new IntentFilter(AlertBroadcastAction)
+                {
+                    Priority = 1
+                });
         }
+
+        ~AlertDialogErrorHandler()
+            => Application.Context.UnregisterReceiver(receiver);
     }
 }

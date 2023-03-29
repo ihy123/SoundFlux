@@ -12,7 +12,7 @@
 	<sys:String x:Key="Lang.CurrentInputFormatLabel">Current input format</sys:String>
 	<sys:String x:Key="Lang.DisconnectButton">Disconnect</sys:String>
 	<sys:String x:Key="Lang.InputDeviceExpander">Input device</sys:String>
-	<sys:String x:Key="Lang.LanguageLabel">Language</sys:String>
+	<sys:String x:Key="Lang.LanguageLabel">Language:</sys:String>
 	<sys:String x:Key="Lang.LibrariesUsedLabel">Libraries used</sys:String>
 	<sys:String x:Key="Lang.NetworkBufferLabel">Network buffer (ms)</sys:String>
 	<sys:String x:Key="Lang.OutputDeviceExpander">Output device</sys:String>
@@ -26,5 +26,7 @@
 	<sys:String x:Key="Lang.StartButton">Start</sys:String>
 	<sys:String x:Key="Lang.TerminateButton">Terminate</sys:String>
 	<sys:String x:Key="Lang.TransmissionFormatLabel">Transmission format</sys:String>
+	<sys:String x:Key="Lang.MinimizeToTrayLabel">Minimize to tray:</sys:String>
+	<sys:String x:Key="Lang.SettingsLabel">Settings</sys:String>
 	
 </ResourceDictionary>

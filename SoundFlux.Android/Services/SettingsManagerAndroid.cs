@@ -1,14 +1,11 @@
-﻿using SoundFlux.Services;
+﻿using Android.App;
+using SoundFlux.Services;
 
 namespace SoundFlux.Android.Services
 {
     internal class SettingsManagerAndroid : SettingsManager
     {
-        public override string SettingsDirectory => configPath;
-
-        private string configPath;
-
-        public SettingsManagerAndroid(string configPath)
-            => this.configPath = configPath;
+        public override string SettingsDirectory
+            => Application.Context!.FilesDir!.AbsolutePath + '/';
     }
 }

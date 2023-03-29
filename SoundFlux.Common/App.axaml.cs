@@ -1,52 +1,60 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using Avalonia.Styling;
 using SoundFlux.Services;
+using SoundFlux.ViewModels;
 using SoundFlux.Views;
-using System.Threading;
 
 namespace SoundFlux
 {
     public partial class App : Application
     {
-        public override void Initialize()
+        private MainViewModel? mainVM;
+        private MainWindow? mainWindow;
+        private Client client;
+        private Server server;
+
+        public App(Client client, Server server)
         {
-            //GlobalEvents.OnExitEvent += () =>
-            //{
-            //    var sect = SharedSettings.Instance.AddSection("Interface");
-            //    sect.Add("Language", LanguageManager.Instance.CurrentLangCode);
-            //};
-
-            string? lang = ServiceRegistry.SettingsManager.Get("Interface", "Language", null);
-
-            if (string.IsNullOrEmpty(lang))
-                lang = Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
-            if (string.IsNullOrEmpty(lang))
-                lang = "en";
-
-            LanguageManager.CurrentLangCode = lang;
-
-            RequestedThemeVariant = ThemeVariant.Light;
-
-            AvaloniaXamlLoader.Load(this);
+            this.client = client;
+            this.server = server;
         }
+
+        public override void Initialize()
+            => AvaloniaXamlLoader.Load(this);
 
         public override void OnFrameworkInitializationCompleted()
         {
-            var view = new MainView();
-
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                desktop.MainWindow = new MainWindow
+                // init window
+                mainWindow = new();
+
+                // init main VM
+                mainVM = new(client, server, mainWindow);
+
+                mainWindow.Content = new MainView()
                 {
-                    Content = view
+                    DataContext = mainVM
                 };
+                mainWindow.DataContext = mainVM?.TrayIconVM;
+                DataContext = mainVM?.TrayIconVM;
+
+                desktop.MainWindow = mainWindow;
             }
             else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
-                singleViewPlatform.MainView = view;
+            {
+                mainVM = new(client, server);
+                singleViewPlatform.MainView = new MainView()
+                {
+                    DataContext = mainVM
+                };
+            }
 
             base.OnFrameworkInitializationCompleted();
         }
+
+        public void SaveSettings()
+            => mainVM?.SaveSettings();
     }
 }

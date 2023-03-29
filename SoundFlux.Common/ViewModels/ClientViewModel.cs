@@ -4,7 +4,9 @@ using CommunityToolkit.Mvvm.Input;
 using ManagedBass;
 using SoundFlux.Services;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading.Tasks;
 
 namespace SoundFlux.ViewModels
@@ -17,14 +19,24 @@ namespace SoundFlux.ViewModels
         Connected
     }
 
-    internal partial class ClientViewModel : ObservableObject
+    internal partial class ClientViewModel : ObservableObject, INotifyDataErrorInfo
     {
         #region Output device
 
         [ObservableProperty]
         private Dictionary<int, DeviceInfo> outputDevices;
 
-        [ObservableProperty]
+        public KeyValuePair<int, DeviceInfo> SelectedOutputDevice
+        {
+            get => selectedOutputDevice;
+            set
+            {
+                OnPropertyChanging();
+                selectedOutputDevice = value;
+                client.NextOutputDeviceIndex = selectedOutputDevice.Key;
+                OnPropertyChanged();
+            }
+        }
         private KeyValuePair<int, DeviceInfo> selectedOutputDevice;
 
         public bool IsOutputDeviceDropDownOpen
@@ -40,9 +52,9 @@ namespace SoundFlux.ViewModels
         {
             lock (refreshDevicesMutex)
             {
-                var list = Client.OutputDevices;
-                int idx = list.TryGetValue(SelectedOutputDevice.Key, out DeviceInfo val) ?
-                    SelectedOutputDevice.Key : Client.DefaultOutputDeviceIndex;
+                var list = AudioDeviceEnumerator.OutputDevices;
+                int idx = list.ContainsKey(SelectedOutputDevice.Key) ?
+                    SelectedOutputDevice.Key : AudioDeviceEnumerator.DefaultOutputDeviceIndex;
 
                 Dispatcher.UIThread.Post(() =>
                 {
@@ -56,11 +68,21 @@ namespace SoundFlux.ViewModels
 
         #region Connection
 
-        [ObservableProperty]
+        public string? ServerAddress
+        {
+            get => serverAddress;
+            set
+            {
+                if (SetProperty(ref serverAddress, value) && flagValidateServerAddress)
+                    ValidateServerAddress();
+            }
+        }
         private string? serverAddress;
 
         [ObservableProperty]
         private ClientStatus status = ClientStatus.NotConnected;
+
+        private Client client;
 
         [RelayCommand]
         private void ConnectAsync() => Task.Run(Connect);
@@ -76,25 +98,13 @@ namespace SoundFlux.ViewModels
                     Status = ClientStatus.NotConnected;
                     break;
                 case ClientStatus.NotConnected:
-                    // validate selected device
-                    //if (OutputDevices == null)
-                    //{
-                    //    GlobalEvents.OnError(Resources.Resources.OutputDeviceNotSelectedError);
-                    //    break;
-                    //}
-
-                    // validate server address
-                    if (ServerAddress == null || !Utils.ValidateIpv4WithPort(ServerAddress))
-                    {
-                        GlobalEvents.OnError(string.Format(Resources.Resources.InvalidServerAddressError,
-                            ServerAddress ?? ""));
+                    if (!ValidateServerAddress())
                         break;
-                    }
 
                     // check network connection
-                    if (PlatformUtilities.Instance.NetworkInterfaceAddressList.Count == 0)
+                    if (ServiceRegistry.NetHelper.NetworkInterfaceAddressList.Count == 0)
                     {
-                        GlobalEvents.OnError(Resources.Resources.NetworkNotConnectedError);
+                        ServiceRegistry.ErrorHandler.Error(Resources.Resources.NetworkNotConnectedError);
                         break;
                     }
 
@@ -102,31 +112,33 @@ namespace SoundFlux.ViewModels
 
                     try
                     {
-                        if (client.Start(SelectedOutputDevice.Key,
-                            ServerAddress, PlatformUtilities.Instance.DeviceName,
-                            (int)NetworkBufferDuration, (int)PlaybackBufferDuration, () =>
+                        if (client.Start(ServerAddress!, ServiceRegistry.NetHelper.DeviceName, () =>
                             {
                                 Task.Run(() =>
                                 {
-                                    Status = ClientStatus.NotConnected;
-                                    client.Stop();
-                                    Connect();
+                                    if (Status == ClientStatus.Connected)
+                                    {
+                                        Status = ClientStatus.NotConnected;
+                                        client.Stop();
+                                        Connect();
+                                    }
                                 });
                             }))
                         {
                             Status = ClientStatus.Connected;
-                            client.Volume = IsMuted ? 0 : volume / 100.0;
                             return;
                         }
                     }
                     catch (BassException e)
                     {
                         if (e.ErrorCode != Errors.FileOpen && e.ErrorCode != Errors.Timeout)
-                            GlobalEvents.OnError(string.Format(Resources.Resources.BassErrorFormat, e.Message));
+                            ServiceRegistry.ErrorHandler.Error(string.Format(
+                                Resources.Resources.BassErrorFormat, e.Message));
                     }
                     catch (Exception e)
                     {
-                        GlobalEvents.OnError(string.Format(Resources.Resources.ExceptionFormat, e.Message));
+                        ServiceRegistry.ErrorHandler.Error(string.Format(
+                            Resources.Resources.ExceptionFormat, e.Message));
                     }
 
                     // return back unconnected status on connection error
@@ -140,28 +152,30 @@ namespace SoundFlux.ViewModels
         #region Volume
 
         [RelayCommand]
-        private void Mute()
-        {
-            IsMuted = !IsMuted;
+        private void Mute() => IsMuted = !IsMuted;
 
-            if (Status == ClientStatus.Connected)
-                client.Volume = IsMuted ? 0 : volume / 100.0;
+        public bool IsMuted
+        {
+            get => client.IsMuted;
+            set
+            {
+                if (client.IsMuted != value)
+                {
+                    OnPropertyChanging();
+                    client.IsMuted = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
-        [ObservableProperty]
-        private bool isMuted = false;
-
-        private double volume = 100.0;
         public double Volume
         {
-            get => volume;
+            get => client.Volume * 100.0;
             set
             {
                 OnPropertyChanging();
-                IsMuted = false;
-                volume = value;
-                if (Status == ClientStatus.Connected)
-                    client.Volume = volume / 100.0;
+                if (IsMuted) IsMuted = false;
+                client.Volume = value / 100.0;
                 OnPropertyChanged();
             }
         }
@@ -180,22 +194,35 @@ namespace SoundFlux.ViewModels
                 OnPropertyChanged();
             }
         }
-        public const double DefaultConnectTimeOut = 5;
 
-        [ObservableProperty]
-        private double networkBufferDuration = DefaultNetworkBufferDuration;
-        public const double DefaultNetworkBufferDuration = 5000;
+        public double NetworkBufferDuration
+        {
+            get => Client.NetworkBufferDuration;
+            set
+            {
+                OnPropertyChanging();
+                Client.NetworkBufferDuration = (int)value;
+                OnPropertyChanged();
+            }
+        }
 
-        [ObservableProperty]
-        private double playbackBufferDuration = DefaultPlaybackBufferDuration;
-        public const double DefaultPlaybackBufferDuration = 500;
+        public double PlaybackBufferDuration
+        {
+            get => Client.PlaybackBufferDuration;
+            set
+            {
+                OnPropertyChanging();
+                Client.PlaybackBufferDuration = (int)value;
+                OnPropertyChanged();
+            }
+        }
 
         [RelayCommand]
         private void ResetAdvancedSettings()
         {
-            ConnectTimeOut = DefaultConnectTimeOut;
-            NetworkBufferDuration = DefaultNetworkBufferDuration;
-            PlaybackBufferDuration = DefaultPlaybackBufferDuration;
+            ConnectTimeOut = Client.DefaultConnectTimeOut / 1000.0;
+            NetworkBufferDuration = Client.DefaultNetworkBufferDuration;
+            PlaybackBufferDuration = Client.DefaultPlaybackBufferDuration;
         }
 
         #endregion
@@ -204,48 +231,67 @@ namespace SoundFlux.ViewModels
 
         private void LoadSettings()
         {
-            int selectedDeviceIndex = SettingsManager.Instance.Get(
-                "ClientViewModel", "SelectedDeviceIndex", Client.DefaultOutputDeviceIndex);
-            int idx = OutputDevices.ContainsKey(selectedDeviceIndex) ?
-                selectedDeviceIndex : Client.DefaultOutputDeviceIndex;
-            SelectedOutputDevice = new(idx, OutputDevices[idx]);
-
-            Volume = SettingsManager.Instance.Get("ClientViewModel", "Volume", Volume);
-            IsMuted = SettingsManager.Instance.Get("ClientViewModel", "IsMuted", IsMuted);
-            ConnectTimeOut = SettingsManager.Instance.Get(
-                "ClientViewModel", "ConnectTimeOut", ConnectTimeOut);
-            NetworkBufferDuration = SettingsManager.Instance.Get(
-                "ClientViewModel", "NetworkBufferDuration", NetworkBufferDuration);
-            PlaybackBufferDuration = SettingsManager.Instance.Get(
-                "ClientViewModel", "PlaybackBufferDuration", PlaybackBufferDuration);
-
-            ServerAddress = SettingsManager.Instance.Get("ClientViewModel", "ServerAddress", null);
+            ServerAddress = ServiceRegistry.SettingsManager.Get("Client", "ServerAddress", null);
             if (!string.IsNullOrEmpty(ServerAddress))
                 ConnectAsync();
         }
 
-        private void SaveSettings()
+        public void SaveSettings()
         {
-            SettingsManager.Instance.Add("ClientViewModel", "SelectedDeviceIndex", SelectedOutputDevice.Key);
-            SettingsManager.Instance.Add("ClientViewModel", "IsMuted", IsMuted);
-            SettingsManager.Instance.Add("ClientViewModel", "Volume", Volume);
-            SettingsManager.Instance.Add("ClientViewModel", "ConnectTimeOut", ConnectTimeOut);
-            SettingsManager.Instance.Add("ClientViewModel", "NetworkBufferDuration", NetworkBufferDuration);
-            SettingsManager.Instance.Add("ClientViewModel", "PlaybackBufferDuration", PlaybackBufferDuration);
-            SettingsManager.Instance.Add("ClientViewModel", "ServerAddress",
-                ServerAddress != null && (Status == ClientStatus.Connected || Status == ClientStatus.Connecting)
+            ServiceRegistry.SettingsManager.Set("Client", "ServerAddress", ServerAddress != null &&
+                (Status == ClientStatus.Connected || Status == ClientStatus.Connecting)
                 ? ServerAddress : string.Empty);
         }
 
         #endregion
 
-        private Client client = new();
+        #region Validation
 
-        public ClientViewModel()
+        private bool flagValidateServerAddress = false;
+        private bool ValidateServerAddress()
         {
-            GlobalEvents.OnExitEvent += SaveSettings;
-            OutputDevices = Client.OutputDevices;
-            LoadSettings();
+            bool f = flagValidateServerAddress;
+
+            if (ServerAddress == null || !Utils.ValidateIpv4WithPort(ServerAddress))
+                flagValidateServerAddress = true;
+            else if (flagValidateServerAddress)
+                flagValidateServerAddress = false;
+
+            if (f != flagValidateServerAddress)
+                ErrorsChanged?.Invoke(this, new(nameof(ServerAddress)));
+
+            return !flagValidateServerAddress;
         }
+
+        public bool HasErrors => throw new NotImplementedException();
+
+        public IEnumerable GetErrors(string? propertyName)
+        {
+            switch (propertyName)
+            {
+                case nameof(ServerAddress):
+                    if (flagValidateServerAddress)
+                        return new[] { string.Format(
+                            Resources.Resources.InvalidServerAddressError, ServerAddress ?? "") };
+                    break;
+            }
+            return null!;
+        }
+
+        public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
+
+        #endregion
+
+#pragma warning disable CS8618
+        public ClientViewModel(Client client)
+        {
+            this.client = client;
+            OutputDevices = AudioDeviceEnumerator.OutputDevices;
+            LoadSettings();
+
+            if (OutputDevices.TryGetValue(client.NextOutputDeviceIndex, out var info))
+                SelectedOutputDevice = new(client.NextOutputDeviceIndex, info);
+        }
+#pragma warning restore CS8618
     }
 }

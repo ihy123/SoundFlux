@@ -10,17 +10,17 @@ namespace SoundFlux.Services
             set => _settingsManager = value;
         }
 
-        public static Client Client
-        {
-            get => _client ??= new Client();
-            set => _client = value;
-        }
+        //public static Client Client
+        //{
+        //    get => _client ??= new Client();
+        //    set => _client = value;
+        //}
 
-        public static Server Server
-        {
-            get => _server ??= new Server();
-            set => _server = value;
-        }
+        //public static Server Server
+        //{
+        //    get => _server ??= new Server();
+        //    set => _server = value;
+        //}
 
         public static IErrorHandler ErrorHandler
         {
@@ -37,7 +37,7 @@ namespace SoundFlux.Services
         private static SettingsManager? _settingsManager;
         private static IErrorHandler? _errorHandler;
         private static INetHelper? _netHelper;
-        private static Client? _client;
-        private static Server? _server;
+        //private static Client? _client;
+        //private static Server? _server;
     }
 }

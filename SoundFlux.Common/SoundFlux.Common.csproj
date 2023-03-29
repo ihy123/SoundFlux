@@ -30,7 +30,7 @@
     <None Remove="Assets\Fonts\Inter\Inter-ExtraLight.otf" />
     <None Remove="Assets\Fonts\Inter\Inter-Light.otf" />
     <None Remove="Assets\Fonts\Inter\Inter.ttf" />
-    <None Remove="Assets\icon.ico" />
+    <None Remove="Assets\Icons\icon.ico" />
     <None Remove="Assets\logo512.png" />
     <TrimmerRootDescriptor Include="Roots.xml" />
   </ItemGroup>

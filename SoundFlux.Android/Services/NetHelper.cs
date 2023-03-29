@@ -1,10 +1,10 @@
-﻿using Android.OS;
-using Android.App;
+﻿using Android.App;
+using Android.OS;
 using Android.Provider;
 using SoundFlux.Services;
 using System.Collections.Generic;
-using System.Net.NetworkInformation;
 using System.Linq;
+using System.Net.NetworkInformation;
 
 namespace SoundFlux.Android.Services
 {

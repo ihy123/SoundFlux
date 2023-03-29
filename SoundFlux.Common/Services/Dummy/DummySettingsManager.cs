@@ -6,7 +6,7 @@ namespace SoundFlux.Services.Dummy
     {
         public override string SettingsDirectory => string.Empty;
 
-        public override void Load()
+        public override bool Load()
             => throw new NotImplementedException();
 
         public override void Save()

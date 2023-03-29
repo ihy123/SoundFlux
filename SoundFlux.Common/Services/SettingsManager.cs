@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace SoundFlux.Services
@@ -12,14 +13,23 @@ namespace SoundFlux.Services
 
         public Dictionary<string, Dictionary<string, string>> Sections { get; private set; } = new();
 
-        public virtual void Load()
+        public virtual bool Load()
         {
             string path = SettingsDirectory + SettingsFileName;
-            if (!File.Exists(path)) return;
+            if (!File.Exists(path)) return false;
 
-            XDocument loaded = XDocument.Load(path);
-            XElement? loadedSections = loaded.Element("sections");
-            if (loadedSections == null) return;
+            XElement? loadedSections;
+
+            try
+            {
+                loadedSections = XDocument.Load(path).Element("sections");
+            }
+            catch (XmlException)
+            {
+                return false;
+            }
+
+            if (loadedSections == null) return false;
             Sections.Clear();
 
             // iterate sections
@@ -33,6 +43,7 @@ namespace SoundFlux.Services
 
                 Sections.Add(s.Name.LocalName, sect);
             }
+            return true;
         }
 
         public virtual void Save()
@@ -57,10 +68,10 @@ namespace SoundFlux.Services
             doc.Save(SettingsDirectory + SettingsFileName);
         }
 
-        public void Add<T>(string section, string name, T value)
-            => Add(section, name, value?.ToString() ?? string.Empty);
+        public void Set<T>(string section, string name, T value)
+            => Set(section, name, value?.ToString() ?? string.Empty);
 
-        public void Add(string section, string name, string value)
+        public void Set(string section, string name, string value)
             => OpenSection(section)[name] = value;
 
         public bool Get(string section, string name, out string? value)

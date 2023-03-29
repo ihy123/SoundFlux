@@ -7,6 +7,9 @@ namespace SoundFlux.Desktop
 {
     internal class Program
     {
+        private static Client client = new();
+        private static Server server = new();
+
         // Initialization code. Don't use any Avalonia, third-party APIs or any
         // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
         // yet and stuff might break.
@@ -16,13 +19,15 @@ namespace SoundFlux.Desktop
             if (!OperatingSystem.IsWindows())
                 throw new Exception($"This OS is not supported.");
 
+            ServiceRegistry.ErrorHandler = new MessageBoxErrorHandler();
             ServiceRegistry.SettingsManager = new SettingsManagerWin32();
             ServiceRegistry.NetHelper = new NetHelper();
-            ServiceRegistry.ErrorHandler = new MessageBoxErrorHandler();
 
             try
             {
                 ServiceRegistry.SettingsManager.Load();
+                client.LoadSettings();
+                server.LoadSettings();
                 BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
             }
             catch (Exception e)
@@ -32,6 +37,12 @@ namespace SoundFlux.Desktop
 
             try
             {
+                client.SaveSettings();
+                server.SaveSettings();
+
+                App? app = (App?)Application.Current;
+                app?.SaveSettings();
+
                 ServiceRegistry.SettingsManager.Save();
             }
             catch (Exception e)
@@ -42,6 +53,6 @@ namespace SoundFlux.Desktop
 
         // Avalonia configuration, don't remove; also used by visual designer.
         public static AppBuilder BuildAvaloniaApp()
-            => AppBuilder.Configure<App>().UsePlatformDetect().LogToTrace();
+            => AppBuilder.Configure(() => new App(client, server)).UsePlatformDetect().LogToTrace();
     }
 }
