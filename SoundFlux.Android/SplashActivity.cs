@@ -3,30 +3,38 @@ using Android.App;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
-using Android.Util;
 using AndroidX.Core.App;
 using Avalonia;
 using Avalonia.Android;
+using SoundFlux.Android.Services;
+using SoundFlux.Services;
 using System;
 using Application = Android.App.Application;
 
 namespace SoundFlux.Android
 {
     [Activity(Theme = "@style/MyTheme.Splash", MainLauncher = true, NoHistory = true)]
-    public class SplashActivity : AvaloniaSplashActivity<App>
+    public class SplashActivity : AvaloniaSplashActivity
     {
         protected override AppBuilder CreateAppBuilder()
         {
+            ServiceRegistry.ErrorHandler = new AlertDialogErrorHandler();
+            ServiceRegistry.SettingsManager = new SettingsManagerAndroid();
+            ServiceRegistry.NetHelper = new NetHelper();
+
             try
             {
-                new PlatformUtilsAndroid(ApplicationContext!.FilesDir!.AbsolutePath + '/');
-                SharedSettings.Instance.Load();
+                ServiceRegistry.SettingsManager.Load();
+                GlobalContext.Client.LoadSettings();
+                GlobalContext.Server.LoadSettings();
             }
             catch (Exception e)
             {
-                Log.Error("SplashActivity", e.ToString());
+                ServiceRegistry.ErrorHandler.Error(e.ToString());
             }
-            return base.CreateAppBuilder();
+
+            return AppBuilder.Configure(() => new App(
+                GlobalContext.Client, GlobalContext.Server)).UseAndroid();
         }
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)

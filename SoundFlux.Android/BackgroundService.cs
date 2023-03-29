@@ -5,7 +5,7 @@ using Android.OS;
 namespace SoundFlux.Android
 {
     [Service]
-    public class PlayerService : Service
+    public class BackgroundService : Service
     {
         public override IBinder? OnBind(Intent? intent)
         {

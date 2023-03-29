@@ -142,6 +142,9 @@
 
 {0}</value>
   </data>
+  <data name="ExitLabel" xml:space="preserve">
+    <value>Выход</value>
+  </data>
   <data name="HzSuffix" xml:space="preserve">
     <value>Гц</value>
   </data>

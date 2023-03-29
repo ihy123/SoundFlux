@@ -1,5 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:r="clr-namespace:SoundFlux.Resources"
              xmlns:local="using:SoundFlux"
              x:Class="SoundFlux.App">
     <Application.DataTemplates>
@@ -29,5 +30,25 @@
 		<SolidColorBrush x:Key="ThemeControlHighBrush">#AAAAAA</SolidColorBrush>
 
 	</Application.Resources>
+
+	<TrayIcon.Icons>
+		<TrayIcons>
+			<TrayIcon Icon="/Assets/Icons/icon.ico"
+					  IsVisible="{Binding IsMinimizedToTray, Mode=OneWay}"
+					  Command="{Binding TrayIconClickedCommand}"
+					  ToolTipText="SoundFlux">
+
+				<TrayIcon.Menu>
+					<NativeMenu>
+						
+						<NativeMenuItem Header="{x:Static r:Resources.ExitLabel}"
+										Command="{Binding TrayIconExitCommand}"/>
+						
+					</NativeMenu>
+				</TrayIcon.Menu>
+				
+			</TrayIcon>
+		</TrayIcons>
+	</TrayIcon.Icons>
 	
 </Application>

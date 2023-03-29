@@ -12,7 +12,7 @@
 	<sys:String x:Key="Lang.CurrentInputFormatLabel">Текущий формат ввода</sys:String>
 	<sys:String x:Key="Lang.DisconnectButton">Отключиться</sys:String>
 	<sys:String x:Key="Lang.InputDeviceExpander">Устройство ввода</sys:String>
-	<sys:String x:Key="Lang.LanguageLabel">Язык</sys:String>
+	<sys:String x:Key="Lang.LanguageLabel">Язык:</sys:String>
 	<sys:String x:Key="Lang.LibrariesUsedLabel">Использованные библиотеки</sys:String>
 	<sys:String x:Key="Lang.NetworkBufferLabel">Сетевой буффер (мс)</sys:String>
 	<sys:String x:Key="Lang.OutputDeviceExpander">Устройство вывода</sys:String>
@@ -26,5 +26,7 @@
 	<sys:String x:Key="Lang.StartButton">Запустить</sys:String>
 	<sys:String x:Key="Lang.TerminateButton">Остановить</sys:String>
 	<sys:String x:Key="Lang.TransmissionFormatLabel">Формат передачи</sys:String>
+	<sys:String x:Key="Lang.MinimizeToTrayLabel">Сворачивать в трей:</sys:String>
+	<sys:String x:Key="Lang.SettingsLabel">Настройки</sys:String>
 
 </ResourceDictionary>

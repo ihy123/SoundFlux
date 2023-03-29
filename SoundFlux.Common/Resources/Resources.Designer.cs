@@ -128,6 +128,15 @@ namespace SoundFlux.Resources {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Exit.
+        /// </summary>
+        public static string ExitLabel {
+            get {
+                return ResourceManager.GetString("ExitLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Hz.
         /// </summary>
         public static string HzSuffix {

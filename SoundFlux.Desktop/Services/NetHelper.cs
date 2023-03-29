@@ -1,18 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using SoundFlux.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
-using System.Linq;
-using System;
 
-namespace SoundFlux.Desktop
+namespace SoundFlux.Desktop.Services
 {
-    public partial class PlatformUtilsWin32 : PlatformUtilities
+    internal partial class NetHelper : INetHelper
     {
-        public override string SettingsDirectory => Environment.ExpandEnvironmentVariables("%AppData%\\SoundFlux\\");
-
-        public PlatformUtilsWin32() => Instance = this;
-
-        public override string DeviceName
+        public string DeviceName
         {
             get
             {
@@ -29,7 +26,7 @@ namespace SoundFlux.Desktop
             }
         }
 
-        public override List<string> NetworkInterfaceAddressList
+        public List<string> NetworkInterfaceAddressList
         {
             get
             {

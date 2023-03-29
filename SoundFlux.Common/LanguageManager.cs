@@ -7,38 +7,36 @@ namespace SoundFlux
 {
     public class LanguageManager
     {
-        public static readonly LanguageManager Instance = new();
-
         public static readonly Dictionary<string, string> SupportedLanguages = new()
         {
             { "en", "English" },
             { "ru", "Русский" }
         };
 
-        private string currentThemeCode = "";
-        public string CurrentThemeCode
+        private static ResourceInclude? currentResourceInclude = null;
+        private static string currentLangCode = "";
+
+        public static string CurrentLangCode
         {
-            get => currentThemeCode;
+            get => currentLangCode;
             set
             {
-                if (currentThemeCode != value && SupportedLanguages.ContainsKey(value))
+                if (currentLangCode != value && SupportedLanguages.ContainsKey(value))
                 {
-                    currentThemeCode = value;
+                    currentLangCode = value;
 
-                    var d = App.Current!.Resources.MergedDictionaries;
+                    var d = Avalonia.Application.Current!.Resources.MergedDictionaries;
                     if (currentResourceInclude != null) d.Remove(currentResourceInclude);
 
                     currentResourceInclude = new ResourceInclude((System.Uri?)null)
                     {
-                        Source = new System.Uri($"avares://SoundFlux.Common/Assets/Languages/{currentThemeCode}.axaml")
+                        Source = new System.Uri($"avares://SoundFlux.Common/Assets/Languages/{currentLangCode}.axaml")
                     };
                     d.Add(currentResourceInclude);
 
-                    Thread.CurrentThread.CurrentUICulture = Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(currentThemeCode);
+                    Thread.CurrentThread.CurrentUICulture = Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(currentLangCode);
                 }
             }
         }
-
-        private ResourceInclude? currentResourceInclude = null;
     }
 }

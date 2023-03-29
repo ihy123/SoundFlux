@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using Avalonia.Threading;
+using SoundFlux.ViewModels;
+using System;
 
 namespace SoundFlux.Views
 {
@@ -14,22 +15,19 @@ namespace SoundFlux.Views
             {
                 ColumnDefinitions = new ColumnDefinitions("Auto * *")
             });
+        }
 
-            GlobalContext.OnExitEvent += () =>
-                SharedSettings.Instance.AddSection("MainView").Add("SelectedPage", MainTabControl.SelectedIndex);
+        protected override void OnLoaded()
+        {
+            base.OnLoaded();
 
-            GlobalContext.OnErrorEvent += msg =>
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    DefaultPopupText.Text = msg;
-                    DefaultPopup.Open();
-                });
-            };
+            var dc = (MainViewModel?)DataContext;
+            if (dc == null)
+                throw new Exception("MainViewModel's DataContext is not set");
 
-            var sect = SharedSettings.Instance.GetSection("MainView");
-            if (sect == null) return;
-            MainTabControl.SelectedIndex = sect.GetInt("SelectedPage");
+            serverView.DataContext = dc.ServerVM;
+            clientView.DataContext = dc.ClientVM;
+            settingsView.DataContext = dc.SettingsVM;
         }
     }
 }

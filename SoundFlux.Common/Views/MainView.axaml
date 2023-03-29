@@ -117,7 +117,9 @@
 	<Panel x:Name="mainPanel">
 		
 		<TabControl Name="MainTabControl" Focusable="True" Padding="0" Margin="0"
-				Foreground="{DynamicResource PrimaryForeground}">
+					Foreground="{DynamicResource PrimaryForeground}"
+					SelectedIndex="{Binding SelectedTabIndex}">
+			
 			<TabItem Grid.Column="0">
 				<TabItem.Header>
 					<Image Margin="5 0" Height="30" VerticalAlignment="Center"
@@ -125,11 +127,7 @@
 				</TabItem.Header>
 					
 				<ScrollViewer>
-					<views:SettingsView>
-						<views:SettingsView.DataContext>
-							<viewModels:SettingsViewModel/>
-						</views:SettingsView.DataContext>
-					</views:SettingsView>
+					<views:SettingsView Name="settingsView"/>
 				</ScrollViewer>
 			</TabItem>
 
@@ -144,11 +142,7 @@
 				</TabItem.Header>
 
 				<ScrollViewer>
-					<views:ServerView x:Name="serverView">
-						<views:ServerView.DataContext>
-							<viewModels:ServerViewModel/>
-						</views:ServerView.DataContext>
-					</views:ServerView>
+					<views:ServerView Name="serverView"/>
 				</ScrollViewer>
 			</TabItem>
 
@@ -163,11 +157,7 @@
 				</TabItem.Header>
 
 				<ScrollViewer>
-					<views:ClientView x:Name="clientView">
-						<views:ClientView.DataContext>
-							<viewModels:ClientViewModel/>
-						</views:ClientView.DataContext>
-					</views:ClientView>
+					<views:ClientView Name="clientView"/>
 				</ScrollViewer>
 			</TabItem>
 		</TabControl>

@@ -1,5 +1,5 @@
 #define AppName "SoundFlux"
-#define AppVersion "0.0.2"
+#define AppVersion "0.1.0"
 #define AppPublisher "ihy123"
 #define AppExeName "SoundFlux.exe"
 
