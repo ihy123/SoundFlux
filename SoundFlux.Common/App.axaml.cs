@@ -14,6 +14,9 @@ namespace SoundFlux
         private Client client;
         private Server server;
 
+        // Design-time constructor
+        public App() : this(new(), new()) { }
+
         public App(Client client, Server server)
         {
             this.client = client;

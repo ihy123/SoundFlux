@@ -102,11 +102,11 @@ namespace SoundFlux.ViewModels
                         break;
 
                     // check network connection
-                    if (ServiceRegistry.NetHelper.NetworkInterfaceAddressList.Count == 0)
-                    {
-                        ServiceRegistry.ErrorHandler.Error(Resources.Resources.NetworkNotConnectedError);
-                        break;
-                    }
+                    //if (ServiceRegistry.NetHelper.NetworkInterfaceAddressList.Count == 0)
+                    //{
+                    //    ServiceRegistry.ErrorHandler.Error(Resources.Resources.NetworkNotConnectedError);
+                    //    break;
+                    //}
 
                     Status = ClientStatus.Connecting;
 

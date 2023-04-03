@@ -103,12 +103,12 @@ namespace SoundFlux.ViewModels
                     break;
                 case ServerStatus.NotStarted:
                     // check network connection
-                    var addrs = ServiceRegistry.NetHelper.NetworkInterfaceAddressList;
-                    if (addrs.Count == 0)
-                    {
-                        ServiceRegistry.ErrorHandler.Error(Resources.Resources.NetworkNotConnectedError);
-                        return;
-                    }
+                    //var addrs = ServiceRegistry.NetHelper.NetworkInterfaceAddressList;
+                    //if (addrs.Count == 0)
+                    //{
+                    //    ServiceRegistry.ErrorHandler.Error(Resources.Resources.NetworkNotConnectedError);
+                    //    return;
+                    //}
 
                     // validate port
                     if (Utils.TryParsePort(Port) == -1)
@@ -121,7 +121,7 @@ namespace SoundFlux.ViewModels
                         if (server.Start(ClientCallback))
                         {
                             Status = ServerStatus.Started;
-                            SetCurrentAddresses(addrs);
+                            SetCurrentAddresses(ServiceRegistry.NetHelper.NetworkInterfaceAddressList);
                             Port = server.CurrentPort.ToString();
                             break;
                         }

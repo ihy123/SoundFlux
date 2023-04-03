@@ -34,21 +34,33 @@ namespace SoundFlux.Android.Services
         {
             get
             {
-                var list = new List<string>();
+                List<string> list = new(), list1 = new();
+
                 foreach (NetworkInterface i in NetworkInterface.GetAllNetworkInterfaces())
                 {
                     if (i.OperationalStatus == OperationalStatus.Up &&
-                        i.Name.Contains("wlan") &&
                         i.NetworkInterfaceType != NetworkInterfaceType.Loopback)
                     {
                         var ipv4 = i.GetIPProperties().UnicastAddresses?
-                            .FirstOrDefault(a => a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)?
+                            .FirstOrDefault(a => a.Address.AddressFamily ==
+                                System.Net.Sockets.AddressFamily.InterNetwork)?
                             .Address;
+                        if (ipv4 == null)
+                            continue;
 
-                        if (ipv4 != null)
+                        if ((i.Name.Contains("ap") || i.Name.Contains("wlan")) &&
+                            !i.Name.Contains("dummy"))
+                        {
                             list.Add(ipv4.ToString());
+                        }
+                        else
+                            list1.Add(ipv4.ToString());
                     }
                 }
+
+                if (list.Count == 0)
+                    return list1;
+
                 return list;
             }
         }
